@@ -18,33 +18,49 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   // ALL HOOKS MUST BE CALLED FIRST - before any conditional logic or early returns
   useEffect(() => {
+    // Only run redirection logic when we have both user and profile data
     if (user && profile) {
       const currentPath = location.pathname;
       
-      // Handle role-based redirects for authenticated users
-      if (profile.onboarding_completed || (profile.role === 'admin' || profile.role === 'superadmin')) {
-        // Redirect based on role when on root path
-        if (currentPath === '/') {
-          if (profile.role === 'superadmin') {
-            navigate('/admin/dashboard', { replace: true });
-          } else if (profile.role === 'admin') {
-            navigate('/admin/events', { replace: true });
-          }
-          // Users stay on dashboard (root path)
+      // Skip redirection if we're already on auth pages
+      if (currentPath.startsWith('/auth')) {
+        return;
+      }
+      
+      console.log('ProtectedRoute: Checking redirects for user role:', profile.role, 'onboarding:', profile.onboarding_completed, 'path:', currentPath);
+      
+      // Role-based redirection logic
+      if (profile.role === 'superadmin') {
+        // SuperAdmin should go to /admin/dashboard
+        if (currentPath === '/' || currentPath === '/admin') {
+          console.log('ProtectedRoute: Redirecting superadmin to /admin/dashboard');
+          navigate('/admin/dashboard', { replace: true });
           return;
         }
-        
-        // Prevent regular users from accessing admin routes
-        if (profile.role === 'user' && currentPath.startsWith('/admin')) {
+      } else if (profile.role === 'admin') {
+        // Admin should go to /admin/events  
+        if (currentPath === '/' || currentPath === '/admin') {
+          console.log('ProtectedRoute: Redirecting admin to /admin/events');
+          navigate('/admin/events', { replace: true });
+          return;
+        }
+      } else if (profile.role === 'user') {
+        // Prevent users from accessing admin routes
+        if (currentPath.startsWith('/admin')) {
+          console.log('ProtectedRoute: Redirecting user away from admin area to /');
           navigate('/', { replace: true });
           return;
         }
-      }
-      
-      // Handle incomplete onboarding for regular users
-      if (profile.role === 'user' && !profile.onboarding_completed && !currentPath.startsWith('/auth')) {
-        // User needs to complete onboarding - this is handled by the onboarding check below
-        return;
+        
+        // Handle user onboarding flow - if not completed, show onboarding
+        if (!profile.onboarding_completed) {
+          console.log('ProtectedRoute: User needs onboarding');
+          // The onboarding check below will handle this
+          return;
+        }
+        
+        // User is completed and should stay on regular user routes
+        console.log('ProtectedRoute: User has completed onboarding, staying on user routes');
       }
     }
   }, [user, profile, navigate, location.pathname]);
@@ -69,17 +85,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <OnboardingFlow />;
   }
 
-  // Show loading for admin users being redirected
-  if (profile && !profile.onboarding_completed && (profile.role === 'admin' || profile.role === 'superadmin')) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-peach-gold" />
-          <p className="text-muted-foreground">Redirecting to admin panel...</p>
-        </div>
-      </div>
-    );
-  }
+  // Admin and superadmin users don't need onboarding - they go directly to admin panel
+  // The useEffect above handles their redirection
 
   return <>{children}</>;
 };
