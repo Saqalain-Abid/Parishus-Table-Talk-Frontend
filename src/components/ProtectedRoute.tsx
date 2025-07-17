@@ -21,22 +21,30 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     if (user && profile) {
       const currentPath = location.pathname;
       
-      // Handle admin users who haven't completed onboarding
-      if (!profile.onboarding_completed && (profile.role === 'admin' || profile.role === 'superadmin')) {
-        navigate('/admin', { replace: true });
-        return;
+      // Handle role-based redirects for authenticated users
+      if (profile.onboarding_completed || (profile.role === 'admin' || profile.role === 'superadmin')) {
+        // Redirect based on role when on root path
+        if (currentPath === '/') {
+          if (profile.role === 'superadmin') {
+            navigate('/admin/dashboard', { replace: true });
+          } else if (profile.role === 'admin') {
+            navigate('/admin/events', { replace: true });
+          }
+          // Users stay on dashboard (root path)
+          return;
+        }
+        
+        // Prevent regular users from accessing admin routes
+        if (profile.role === 'user' && currentPath.startsWith('/admin')) {
+          navigate('/', { replace: true });
+          return;
+        }
       }
       
-      // Handle completed onboarding redirects
-      if (profile.onboarding_completed) {
-        if (profile.role === 'superadmin' && currentPath === '/') {
-          navigate('/admin', { replace: true });
-        } else if (profile.role === 'admin' && currentPath === '/') {
-          navigate('/admin', { replace: true });
-        } else if (profile.role === 'user' && currentPath.startsWith('/admin')) {
-          // Prevent regular users from accessing admin routes
-          navigate('/', { replace: true });
-        }
+      // Handle incomplete onboarding for regular users
+      if (profile.role === 'user' && !profile.onboarding_completed && !currentPath.startsWith('/auth')) {
+        // User needs to complete onboarding - this is handled by the onboarding check below
+        return;
       }
     }
   }, [user, profile, navigate, location.pathname]);

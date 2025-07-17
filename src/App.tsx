@@ -81,14 +81,19 @@ const App = () => (
                   <Subscription />
                 </ProtectedRoute>
               } />
-              <Route path="/admin" element={
-                <ProtectedAdminRoute>
+              <Route path="/admin/dashboard" element={
+                <ProtectedAdminRoute requireSuperAdmin={true}>
                   <AdminDashboard />
                 </ProtectedAdminRoute>
               } />
               <Route path="/admin/events" element={
                 <ProtectedAdminRoute>
                   <AdminEvents />
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin" element={
+                <ProtectedAdminRoute>
+                  <AdminDashboard />
                 </ProtectedAdminRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
