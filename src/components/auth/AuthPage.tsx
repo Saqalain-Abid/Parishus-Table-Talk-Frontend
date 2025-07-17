@@ -51,6 +51,13 @@ const AuthPage = () => {
     e.preventDefault();
     setLoading(true);
     
+    console.log('🚀 Starting signup process with:', {
+      email,
+      firstName,
+      lastName,
+      role
+    });
+    
     try {
       const { error } = await signUp(email, password, {
         first_name: firstName,
@@ -58,22 +65,34 @@ const AuthPage = () => {
         role: role
       });
       
+      console.log('📝 Signup response:', { error });
+      
       if (error) {
+        console.error('❌ Signup error:', error);
         toast({
           title: "Error",
           description: error.message,
           variant: "destructive"
         });
       } else {
+        console.log('✅ Signup successful!');
         toast({
           title: "Account Created!",
-          description: "Please check your email to verify your account.",
+          description: `${role} account created successfully. Please check your email to verify your account.`,
         });
+        
+        // Clear form
+        setEmail('');
+        setPassword('');
+        setFirstName('');
+        setLastName('');
+        setRole('user');
       }
     } catch (error) {
+      console.error('❌ Unexpected signup error:', error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred.",
+        description: "An unexpected error occurred during signup.",
         variant: "destructive"
       });
     } finally {
