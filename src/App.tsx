@@ -18,6 +18,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminEvents from "./pages/admin/AdminEvents";
 import ExploreEvents from "./pages/ExploreEvents";
 import TestAuthSystem from "./components/auth/TestAuthSystem";
+import RoleDebugger from "./components/auth/RoleDebugger";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -97,6 +98,9 @@ const App = () => (
               } />
               <Route path="/test-auth" element={
                 <TestAuthSystem />
+              } />
+              <Route path="/debug-role" element={
+                <RoleDebugger />
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
