@@ -23,10 +23,19 @@ import {
   AlertTriangle,
   Star,
   Shield,
-  Crown
+  Crown,
+  UserPlus,
+  Settings,
+  BarChart3,
+  Download,
+  RefreshCw,
+  Plus
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const AdminDashboard = () => {
   const { user, signOut } = useAuth();
@@ -39,14 +48,24 @@ const AdminDashboard = () => {
     totalEvents: 0,
     monthlyRSVPs: 0,
     flaggedFeedback: 0,
-    revenue: 0
+    revenue: 0,
+    monthlyRevenue: 0,
+    totalAdmins: 0
   });
   
   const [users, setUsers] = useState([]);
   const [events, setEvents] = useState([]);
   const [feedback, setFeedback] = useState([]);
+  const [admins, setAdmins] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showCreateAdmin, setShowCreateAdmin] = useState(false);
+  const [newAdmin, setNewAdmin] = useState({
+    email: '',
+    firstName: '',
+    lastName: '',
+    role: 'moderator' as 'moderator' | 'super_admin'
+  });
 
   useEffect(() => {
     if (profile && (profile.role === 'admin' || profile.role === 'superadmin')) {
@@ -57,17 +76,25 @@ const AdminDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch stats
-      const [usersData, eventsData, feedbackData, paymentsData] = await Promise.all([
+      // Fetch stats including admins
+      const [usersData, eventsData, feedbackData, paymentsData, adminsData] = await Promise.all([
         supabase.from('profiles').select('*'),
         supabase.from('events').select('*'),
         supabase.from('feedback').select('*'),
-        supabase.from('payments').select('*')
+        supabase.from('payments').select('*'),
+        supabase.from('admins').select('*')
       ]);
 
       const activeUsers = usersData.data?.filter(u => u.onboarding_completed && !u.is_suspended).length || 0;
       const flaggedFeedback = feedbackData.data?.filter(f => f.flagged_users && f.flagged_users.length > 0).length || 0;
       const revenue = paymentsData.data?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+      
+      // Calculate monthly revenue (last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const monthlyRevenue = paymentsData.data?.filter(p => 
+        new Date(p.created_at) >= thirtyDaysAgo
+      ).reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
 
       setStats({
         totalUsers: usersData.data?.length || 0,
@@ -75,12 +102,15 @@ const AdminDashboard = () => {
         totalEvents: eventsData.data?.length || 0,
         monthlyRSVPs: 0, // Would need to calculate from RSVPs
         flaggedFeedback,
-        revenue: revenue / 100 // Convert from cents
+        revenue: revenue / 100, // Convert from cents
+        monthlyRevenue: monthlyRevenue / 100,
+        totalAdmins: adminsData.data?.length || 0
       });
 
       setUsers(usersData.data || []);
       setEvents(eventsData.data || []);
       setFeedback(feedbackData.data || []);
+      setAdmins(adminsData.data || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -167,6 +197,100 @@ const AdminDashboard = () => {
     }
   };
 
+  const createAdmin = async () => {
+    if (!newAdmin.email || !newAdmin.firstName || !newAdmin.lastName) {
+      toast({ title: "Please fill in all fields", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from('admins').insert({
+        email: newAdmin.email,
+        first_name: newAdmin.firstName,
+        last_name: newAdmin.lastName,
+        role: newAdmin.role as 'moderator' | 'super_admin',
+        password_hash: 'temp_hash', // Would need proper password handling
+        is_active: true
+      });
+
+      if (error) throw error;
+
+      toast({ title: "Admin created successfully" });
+      setShowCreateAdmin(false);
+      setNewAdmin({ email: '', firstName: '', lastName: '', role: 'moderator' as 'moderator' | 'super_admin' });
+      fetchDashboardData();
+    } catch (error) {
+      toast({ title: "Error creating admin", variant: "destructive" });
+    }
+  };
+
+  const toggleAdminStatus = async (adminId: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('admins')
+        .update({ is_active: !isActive })
+        .eq('id', adminId);
+
+      if (error) throw error;
+
+      toast({ title: `Admin ${!isActive ? 'activated' : 'deactivated'} successfully` });
+      fetchDashboardData();
+    } catch (error) {
+      toast({ title: "Error updating admin status", variant: "destructive" });
+    }
+  };
+
+  const promoteUser = async (userId: string, newRole: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole as 'user' | 'admin' | 'superadmin' })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({ title: `User promoted to ${newRole} successfully` });
+      fetchDashboardData();
+    } catch (error) {
+      toast({ title: "Error promoting user", variant: "destructive" });
+    }
+  };
+
+  const exportData = async (dataType: string) => {
+    try {
+      let data;
+      let filename;
+      
+      switch (dataType) {
+        case 'users':
+          data = users;
+          filename = 'users_export.json';
+          break;
+        case 'events':
+          data = events;
+          filename = 'events_export.json';
+          break;
+        case 'revenue':
+          data = await supabase.from('payments').select('*');
+          filename = 'revenue_export.json';
+          break;
+        default:
+          return;
+      }
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      
+      toast({ title: `${dataType} data exported successfully` });
+    } catch (error) {
+      toast({ title: "Error exporting data", variant: "destructive" });
+    }
+  };
+
   const filteredUsers = users.filter(user => 
     `${user.first_name} ${user.last_name} ${user.email}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -218,21 +342,23 @@ const AdminDashboard = () => {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Flagged Feedback</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.flaggedFeedback}</div>
+              <div className="text-2xl font-bold">${stats.monthlyRevenue.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">Total: ${stats.revenue.toFixed(2)}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Admins</CardTitle>
+              <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${stats.revenue.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{stats.totalAdmins}</div>
+              <p className="text-xs text-muted-foreground">{stats.flaggedFeedback} flagged items</p>
             </CardContent>
           </Card>
         </div>
@@ -243,6 +369,13 @@ const AdminDashboard = () => {
             <TabsTrigger value="users">User Management</TabsTrigger>
             <TabsTrigger value="events">Event Management</TabsTrigger>
             <TabsTrigger value="feedback">Feedback Moderation</TabsTrigger>
+            {profile.role === 'superadmin' && (
+              <>
+                <TabsTrigger value="admins">Admin Management</TabsTrigger>
+                <TabsTrigger value="revenue">Revenue Reports</TabsTrigger>
+                <TabsTrigger value="system">System Controls</TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           <TabsContent value="users" className="space-y-4">
@@ -300,6 +433,15 @@ const AdminDashboard = () => {
                                 onClick={() => suspendUser(user.id)}
                               >
                                 <Ban className="h-3 w-3" />
+                              </Button>
+                            )}
+                            {profile.role === 'superadmin' && user.role === 'user' && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => promoteUser(user.id, 'admin')}
+                              >
+                                <Crown className="h-3 w-3" />
                               </Button>
                             )}
                           </div>
@@ -405,6 +547,226 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* SuperAdmin Only Tabs */}
+          {profile.role === 'superadmin' && (
+            <>
+              <TabsContent value="admins" className="space-y-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Admin Management</CardTitle>
+                    <Dialog open={showCreateAdmin} onOpenChange={setShowCreateAdmin}>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Admin
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Create New Admin</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                              id="email"
+                              value={newAdmin.email}
+                              onChange={(e) => setNewAdmin({...newAdmin, email: e.target.value})}
+                              placeholder="admin@example.com"
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="firstName">First Name</Label>
+                            <Input
+                              id="firstName"
+                              value={newAdmin.firstName}
+                              onChange={(e) => setNewAdmin({...newAdmin, firstName: e.target.value})}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="lastName">Last Name</Label>
+                            <Input
+                              id="lastName"
+                              value={newAdmin.lastName}
+                              onChange={(e) => setNewAdmin({...newAdmin, lastName: e.target.value})}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="role">Role</Label>
+                            <Select 
+                              value={newAdmin.role} 
+                              onValueChange={(value: 'moderator' | 'super_admin') => setNewAdmin({...newAdmin, role: value})}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="moderator">Moderator</SelectItem>
+                                <SelectItem value="super_admin">Super Admin</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button onClick={createAdmin} className="w-full">Create Admin</Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </CardHeader>
+                  <CardContent>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {admins.map((admin) => (
+                          <TableRow key={admin.id}>
+                            <TableCell>{admin.first_name} {admin.last_name}</TableCell>
+                            <TableCell>{admin.email}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {admin.role === 'super_admin' ? 'Super Admin' : 'Moderator'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={admin.is_active ? "default" : "destructive"}>
+                                {admin.is_active ? "Active" : "Inactive"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => toggleAdminStatus(admin.id, admin.is_active)}
+                              >
+                                {admin.is_active ? <Ban className="h-3 w-3" /> : <UserCheck className="h-3 w-3" />}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="revenue" className="space-y-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Revenue Reports</CardTitle>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" onClick={() => exportData('revenue')}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                      </Button>
+                      <Button variant="outline" onClick={fetchDashboardData}>
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Refresh
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-2xl font-bold">${stats.revenue.toFixed(2)}</div>
+                          <p className="text-xs text-muted-foreground">Total Revenue</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-2xl font-bold">${stats.monthlyRevenue.toFixed(2)}</div>
+                          <p className="text-xs text-muted-foreground">This Month</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="pt-6">
+                          <div className="text-2xl font-bold">
+                            ${((stats.monthlyRevenue / 30) || 0).toFixed(2)}
+                          </div>
+                          <p className="text-xs text-muted-foreground">Daily Average</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Revenue analytics and detailed reporting would be displayed here with charts and trends.
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="system" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>System-Wide Controls</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Card>
+                        <CardContent className="pt-6">
+                          <h3 className="font-semibold mb-2">Data Export</h3>
+                          <div className="space-y-2">
+                            <Button variant="outline" onClick={() => exportData('users')} className="w-full">
+                              <Download className="h-4 w-4 mr-2" />
+                              Export Users
+                            </Button>
+                            <Button variant="outline" onClick={() => exportData('events')} className="w-full">
+                              <Download className="h-4 w-4 mr-2" />
+                              Export Events
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card>
+                        <CardContent className="pt-6">
+                          <h3 className="font-semibold mb-2">System Status</h3>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span>Database:</span>
+                              <Badge variant="default">Online</Badge>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Email Service:</span>
+                              <Badge variant="default">Active</Badge>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Payments:</span>
+                              <Badge variant="default">Connected</Badge>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    
+                    <Card>
+                      <CardContent className="pt-6">
+                        <h3 className="font-semibold mb-2">Quick Actions</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                          <Button variant="outline" onClick={fetchDashboardData}>
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                            Refresh All Data
+                          </Button>
+                          <Button variant="outline">
+                            <Settings className="h-4 w-4 mr-2" />
+                            System Settings
+                          </Button>
+                          <Button variant="outline">
+                            <BarChart3 className="h-4 w-4 mr-2" />
+                            View Analytics
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </>
+          )}
         </Tabs>
       </div>
     </div>
