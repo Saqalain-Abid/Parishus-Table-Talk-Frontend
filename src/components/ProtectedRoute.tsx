@@ -38,10 +38,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
           return;
         }
       } else if (profile.role === 'admin') {
-        // Admin should go to /admin/events  
+        // Admin should go to /admin/dashboard (not /admin/events)
         if (currentPath === '/' || currentPath === '/admin') {
-          console.log('ProtectedRoute: Redirecting admin to /admin/events');
-          navigate('/admin/events', { replace: true });
+          console.log('ProtectedRoute: Redirecting admin to /admin/dashboard');
+          navigate('/admin/dashboard', { replace: true });
           return;
         }
       } else if (profile.role === 'user') {

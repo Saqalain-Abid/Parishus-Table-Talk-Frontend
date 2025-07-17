@@ -17,6 +17,7 @@ import Subscription from "./pages/Subscription";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminEvents from "./pages/admin/AdminEvents";
 import ExploreEvents from "./pages/ExploreEvents";
+import TestAuthSystem from "./components/auth/TestAuthSystem";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -80,7 +81,7 @@ const App = () => (
                 </ProtectedRoute>
               } />
               <Route path="/admin/dashboard" element={
-                <ProtectedAdminRoute requireSuperAdmin={true}>
+                <ProtectedAdminRoute requireSuperAdmin={false}>
                   <AdminDashboard />
                 </ProtectedAdminRoute>
               } />
@@ -93,6 +94,9 @@ const App = () => (
                 <ProtectedAdminRoute>
                   <AdminDashboard />
                 </ProtectedAdminRoute>
+              } />
+              <Route path="/test-auth" element={
+                <TestAuthSystem />
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import AdminAuth from '@/components/admin/AdminAuth';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Calendar, MessageSquare, CreditCard, MapPin, Bell, LogOut, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const [admin, setAdmin] = useState(null);
+  const { user, signOut } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     users: 0,
@@ -21,10 +24,10 @@ export default function AdminDashboard() {
   });
 
   useEffect(() => {
-    if (admin) {
+    if (profile && (profile.role === 'admin' || profile.role === 'superadmin')) {
       fetchStats();
     }
-  }, [admin]);
+  }, [profile]);
 
   const fetchStats = async () => {
     try {
@@ -57,12 +60,40 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    setAdmin(null);
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
   };
 
-  if (!admin) {
-    return <AdminAuth onLogin={setAdmin} />;
+  // Loading state
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-peach-gold" />
+          <p className="text-muted-foreground">Loading admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user is authorized
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Access Denied</CardTitle>
+            <CardDescription>You don't have permission to access this area.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => navigate('/')} className="w-full">
+              Return to Home
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   const statCards = [
@@ -81,12 +112,12 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold">Admin Dashboard</h1>
             <Badge variant="outline">
-              {admin.role === 'super_admin' ? 'Super Admin' : 'Moderator'}
+              {profile.role === 'superadmin' ? 'Super Admin' : 'Admin'}
             </Badge>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              Welcome, {admin.first_name} {admin.last_name}
+              Welcome, {profile.first_name} {profile.last_name}
             </span>
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
