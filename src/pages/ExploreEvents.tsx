@@ -47,31 +47,43 @@ const ExploreEvents = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log('ExploreEvents useEffect running', { user });
-    const getUserProfile = async () => {
-      if (user) {
-        try {
-          const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('user_id', user.id)
-            .single();
-          
-          console.log('Profile data:', profile, 'Error:', error);
-          setUserProfileId(profile?.id || null);
-        } catch (error) {
-          console.error('Error getting profile:', error);
+    console.log('🔍 ExploreEvents component mounted!', { user: !!user });
+    
+    if (!user) {
+      console.log('❌ No user found, stopping execution');
+      setLoading(false);
+      return;
+    }
+
+    const initializeComponent = async () => {
+      try {
+        console.log('👤 Getting user profile...');
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        console.log('👤 Profile result:', { profile, profileError });
+        
+        if (profileError) {
+          console.error('❌ Profile error:', profileError);
           setUserProfileId(null);
+        } else {
+          setUserProfileId(profile?.id || null);
+          console.log('✅ User profile ID set:', profile?.id);
         }
-      } else {
-        setUserProfileId(null);
+
+        console.log('📅 Now fetching events...');
+        await fetchEvents();
+        
+      } catch (error) {
+        console.error('❌ Error in initialization:', error);
+        setLoading(false);
       }
     };
     
-    getUserProfile().then(() => {
-      console.log('About to fetch events');
-      fetchEvents();
-    });
+    initializeComponent();
   }, [user]);
 
   const fetchEvents = async () => {
