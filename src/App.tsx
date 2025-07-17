@@ -7,6 +7,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navigation from "./components/layout/Navigation";
 import Dashboard from "./pages/Dashboard";
+import Events from "./pages/Events";
+import CreateEvent from "./pages/CreateEvent";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,10 +32,13 @@ const App = () => (
               <Route path="/events" element={
                 <ProtectedRoute>
                   <Navigation />
-                  <div className="p-8 text-center">
-                    <h1 className="text-2xl font-bold">My Events</h1>
-                    <p className="text-muted-foreground mt-2">Coming soon...</p>
-                  </div>
+                  <Events />
+                </ProtectedRoute>
+              } />
+              <Route path="/create-event" element={
+                <ProtectedRoute>
+                  <Navigation />
+                  <CreateEvent />
                 </ProtectedRoute>
               } />
               <Route path="/explore" element={
