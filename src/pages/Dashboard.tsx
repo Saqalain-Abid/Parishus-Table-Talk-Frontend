@@ -239,7 +239,10 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-card border-border cursor-pointer hover:shadow-glow transition-shadow">
+            <Card 
+              className="shadow-card border-border cursor-pointer hover:shadow-glow transition-shadow"
+              onClick={() => navigate('/explore')}
+            >
               <CardContent className="p-6 text-center">
                 <div className="h-12 w-12 bg-sage-green/20 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Search className="h-6 w-6 text-sage-green" />

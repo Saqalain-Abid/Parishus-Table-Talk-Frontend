@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import Subscription from "./pages/Subscription";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminEvents from "./pages/admin/AdminEvents";
+import ExploreEvents from "./pages/ExploreEvents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,10 +52,7 @@ const App = () => (
               <Route path="/explore" element={
                 <ProtectedRoute>
                   <Navigation />
-                  <div className="p-8 text-center">
-                    <h1 className="text-2xl font-bold">Explore Events</h1>
-                    <p className="text-muted-foreground mt-2">Coming soon...</p>
-                  </div>
+                  <ExploreEvents />
                 </ProtectedRoute>
               } />
               <Route path="/crossed-paths" element={
