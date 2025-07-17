@@ -17,7 +17,8 @@ import {
   Settings,
   Bell,
   Heart,
-  Star
+  Star,
+  CreditCard
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -37,6 +38,7 @@ const Navigation = () => {
     { icon: Search, label: 'Explore', path: '/explore' },
     { icon: Heart, label: 'Crossed Paths', path: '/crossed-paths' },
     { icon: Star, label: 'Feedback', path: '/feedback' },
+    { icon: CreditCard, label: 'Subscription', path: '/subscription' },
   ];
 
   return (

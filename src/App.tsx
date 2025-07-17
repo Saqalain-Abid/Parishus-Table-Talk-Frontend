@@ -12,6 +12,8 @@ import CreateEvent from "./pages/CreateEvent";
 import CrossedPaths from "./pages/CrossedPaths";
 import Feedback from "./pages/Feedback";
 import Profile from "./pages/Profile";
+import Subscription from "./pages/Subscription";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -71,6 +73,13 @@ const App = () => (
                   <Profile />
                 </ProtectedRoute>
               } />
+              <Route path="/subscription" element={
+                <ProtectedRoute>
+                  <Navigation />
+                  <Subscription />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin" element={<AdminDashboard />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
