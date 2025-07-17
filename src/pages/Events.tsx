@@ -52,17 +52,34 @@ const Events = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [userProfileId, setUserProfileId] = useState<string | null>(null);
   
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchEvents();
-    fetchMyEvents();
+    const getUserProfile = async () => {
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        setUserProfileId(profile?.id || null);
+      } else {
+        setUserProfileId(null);
+      }
+    };
+    
+    getUserProfile().then(() => {
+      fetchEvents();
+      fetchMyEvents();
+    });
   }, [user]);
 
   const fetchEvents = async () => {
     try {
+
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -86,7 +103,7 @@ const Events = () => {
       const eventsWithCounts = data?.map(event => ({
         ...event,
         rsvp_count: event.rsvps?.filter(r => r.status === 'confirmed').length || 0,
-        user_rsvp: event.rsvps?.filter(r => r.user_id === user?.id) || []
+        user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
       })) || [];
 
       setEvents(eventsWithCounts);
@@ -105,6 +122,8 @@ const Events = () => {
     if (!user) return;
 
     try {
+      if (!userProfileId) return;
+
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -120,7 +139,7 @@ const Events = () => {
             user_id
           )
         `)
-        .or(`creator_id.eq.${user.id},rsvps.user_id.eq.${user.id}`)
+        .or(`creator_id.eq.${userProfileId},rsvps.user_id.eq.${userProfileId}`)
         .order('date_time', { ascending: true });
 
       if (error) throw error;
@@ -128,7 +147,7 @@ const Events = () => {
       const eventsWithCounts = data?.map(event => ({
         ...event,
         rsvp_count: event.rsvps?.filter(r => r.status === 'confirmed').length || 0,
-        user_rsvp: event.rsvps?.filter(r => r.user_id === user?.id) || []
+        user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
       })) || [];
 
       setMyEvents(eventsWithCounts);
@@ -141,6 +160,10 @@ const Events = () => {
     if (!user) return;
 
     try {
+      if (!userProfileId) {
+        throw new Error('Profile not found');
+      }
+
       const event = events.find(e => e.id === eventId);
       const hasRSVP = event?.user_rsvp && event.user_rsvp.length > 0;
 
@@ -150,7 +173,7 @@ const Events = () => {
           .from('rsvps')
           .delete()
           .eq('event_id', eventId)
-          .eq('user_id', user.id);
+          .eq('user_id', userProfileId);
 
         if (error) throw error;
 
@@ -164,7 +187,7 @@ const Events = () => {
           .from('rsvps')
           .insert({
             event_id: eventId,
-            user_id: user.id,
+            user_id: userProfileId,
             status: 'confirmed'
           });
 
@@ -193,7 +216,7 @@ const Events = () => {
         .from('events')
         .delete()
         .eq('id', eventId)
-        .eq('creator_id', user?.id);
+        .eq('creator_id', userProfileId);
 
       if (error) throw error;
 
@@ -221,7 +244,7 @@ const Events = () => {
 
   const EventCard = ({ event, showActions = false }: { event: Event; showActions?: boolean }) => {
     const hasRSVP = event.user_rsvp && event.user_rsvp.length > 0;
-    const isCreator = event.creator_id === user?.id;
+    const isCreator = event.creator_id === userProfileId;
     const spotsLeft = event.max_attendees - (event.rsvp_count || 0);
 
     return (
