@@ -61,7 +61,27 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// ParishUs custom colors
+				'peach-gold': 'hsl(var(--peach-gold))',
+				'sage-green': 'hsl(var(--sage-green))',
+				'dark-surface': 'hsl(var(--dark-surface))',
+				'dark-surface-alt': 'hsl(var(--dark-surface-alt))',
+				'mystery-purple': 'hsl(var(--mystery-purple))'
+			},
+			backgroundImage: {
+				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-mystery': 'var(--gradient-mystery)',
+				'gradient-dark': 'var(--gradient-dark)'
+			},
+			boxShadow: {
+				'elegant': 'var(--shadow-elegant)',
+				'glow': 'var(--shadow-glow)',
+				'card': 'var(--shadow-card)'
+			},
+			transitionTimingFunction: {
+				'smooth': 'var(--transition-smooth)',
+				'bounce': 'var(--transition-bounce)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

@@ -14,7 +14,459 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admins: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          is_active: boolean | null
+          last_name: string | null
+          password_hash: string
+          role: Database["public"]["Enums"]["admin_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_name?: string | null
+          password_hash: string
+          role?: Database["public"]["Enums"]["admin_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_name?: string | null
+          password_hash?: string
+          role?: Database["public"]["Enums"]["admin_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crossed_paths: {
+        Row: {
+          id: string
+          is_active: boolean | null
+          location_lat: number | null
+          location_lng: number | null
+          location_name: string | null
+          matched_at: string
+          user1_id: string
+          user2_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean | null
+          location_lat?: number | null
+          location_lng?: number | null
+          location_name?: string | null
+          matched_at?: string
+          user1_id: string
+          user2_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean | null
+          location_lat?: number | null
+          location_lng?: number | null
+          location_name?: string | null
+          matched_at?: string
+          user1_id?: string
+          user2_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crossed_paths_user1_id_fkey"
+            columns: ["user1_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crossed_paths_user2_id_fkey"
+            columns: ["user2_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          cover_photo_url: string | null
+          created_at: string
+          creator_id: string
+          date_time: string
+          description: string | null
+          dietary_theme:
+            | Database["public"]["Enums"]["dietary_preference"]
+            | null
+          dining_style: Database["public"]["Enums"]["dining_style"] | null
+          id: string
+          is_mystery_dinner: boolean | null
+          location_address: string | null
+          location_lat: number | null
+          location_lng: number | null
+          location_name: string | null
+          max_attendees: number | null
+          name: string
+          status: Database["public"]["Enums"]["event_status"] | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          cover_photo_url?: string | null
+          created_at?: string
+          creator_id: string
+          date_time: string
+          description?: string | null
+          dietary_theme?:
+            | Database["public"]["Enums"]["dietary_preference"]
+            | null
+          dining_style?: Database["public"]["Enums"]["dining_style"] | null
+          id?: string
+          is_mystery_dinner?: boolean | null
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          location_name?: string | null
+          max_attendees?: number | null
+          name: string
+          status?: Database["public"]["Enums"]["event_status"] | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          cover_photo_url?: string | null
+          created_at?: string
+          creator_id?: string
+          date_time?: string
+          description?: string | null
+          dietary_theme?:
+            | Database["public"]["Enums"]["dietary_preference"]
+            | null
+          dining_style?: Database["public"]["Enums"]["dining_style"] | null
+          id?: string
+          is_mystery_dinner?: boolean | null
+          location_address?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          location_name?: string | null
+          max_attendees?: number | null
+          name?: string
+          status?: Database["public"]["Enums"]["event_status"] | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback: {
+        Row: {
+          comment: string | null
+          created_at: string
+          event_id: string
+          flagged_users: string[] | null
+          id: string
+          is_addressed: boolean | null
+          rating: number | null
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          event_id: string
+          flagged_users?: string[] | null
+          id?: string
+          is_addressed?: boolean | null
+          rating?: number | null
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          event_id?: string
+          flagged_users?: string[] | null
+          id?: string
+          is_addressed?: boolean | null
+          rating?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          is_read: boolean | null
+          message: string
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number | null
+          created_at: string
+          currency: string | null
+          id: string
+          plan: Database["public"]["Enums"]["subscription_plan"] | null
+          status: Database["public"]["Enums"]["payment_status"] | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_end: string | null
+          subscription_start: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end?: string | null
+          subscription_start?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end?: string | null
+          subscription_start?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          dietary_preferences:
+            | Database["public"]["Enums"]["dietary_preference"][]
+            | null
+          dining_style: Database["public"]["Enums"]["dining_style"] | null
+          email: string
+          first_name: string | null
+          gender_identity: Database["public"]["Enums"]["gender_identity"] | null
+          id: string
+          is_suspended: boolean | null
+          job_title: string | null
+          last_name: string | null
+          location_city: string | null
+          location_lat: number | null
+          location_lng: number | null
+          onboarding_completed: boolean | null
+          profile_photo_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dietary_preferences?:
+            | Database["public"]["Enums"]["dietary_preference"][]
+            | null
+          dining_style?: Database["public"]["Enums"]["dining_style"] | null
+          email: string
+          first_name?: string | null
+          gender_identity?:
+            | Database["public"]["Enums"]["gender_identity"]
+            | null
+          id?: string
+          is_suspended?: boolean | null
+          job_title?: string | null
+          last_name?: string | null
+          location_city?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          onboarding_completed?: boolean | null
+          profile_photo_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dietary_preferences?:
+            | Database["public"]["Enums"]["dietary_preference"][]
+            | null
+          dining_style?: Database["public"]["Enums"]["dining_style"] | null
+          email?: string
+          first_name?: string | null
+          gender_identity?:
+            | Database["public"]["Enums"]["gender_identity"]
+            | null
+          id?: string
+          is_suspended?: boolean | null
+          job_title?: string | null
+          last_name?: string | null
+          location_city?: string | null
+          location_lat?: number | null
+          location_lng?: number | null
+          onboarding_completed?: boolean | null
+          profile_photo_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rsvps: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          is_running_late: boolean | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          is_running_late?: boolean | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          is_running_late?: boolean | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rsvps_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +475,34 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      admin_role: "super_admin" | "moderator"
+      dietary_preference:
+        | "vegetarian"
+        | "vegan"
+        | "gluten_free"
+        | "dairy_free"
+        | "keto"
+        | "paleo"
+        | "halal"
+        | "kosher"
+        | "no_restrictions"
+      dining_style:
+        | "adventurous"
+        | "foodie_enthusiast"
+        | "local_lover"
+        | "comfort_food"
+        | "health_conscious"
+        | "social_butterfly"
+      event_status: "active" | "cancelled" | "completed"
+      gender_identity: "male" | "female" | "non_binary" | "prefer_not_to_say"
+      notification_type:
+        | "rsvp_confirmation"
+        | "event_reminder"
+        | "crossed_paths_match"
+        | "feedback_request"
+        | "general"
+      payment_status: "pending" | "completed" | "failed" | "refunded"
+      subscription_plan: "monthly" | "yearly"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +629,38 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      admin_role: ["super_admin", "moderator"],
+      dietary_preference: [
+        "vegetarian",
+        "vegan",
+        "gluten_free",
+        "dairy_free",
+        "keto",
+        "paleo",
+        "halal",
+        "kosher",
+        "no_restrictions",
+      ],
+      dining_style: [
+        "adventurous",
+        "foodie_enthusiast",
+        "local_lover",
+        "comfort_food",
+        "health_conscious",
+        "social_butterfly",
+      ],
+      event_status: ["active", "cancelled", "completed"],
+      gender_identity: ["male", "female", "non_binary", "prefer_not_to_say"],
+      notification_type: [
+        "rsvp_confirmation",
+        "event_reminder",
+        "crossed_paths_match",
+        "feedback_request",
+        "general",
+      ],
+      payment_status: ["pending", "completed", "failed", "refunded"],
+      subscription_plan: ["monthly", "yearly"],
+    },
   },
 } as const
