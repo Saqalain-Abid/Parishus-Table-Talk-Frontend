@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Calendar, MessageSquare, CreditCard, MapPin, Bell, LogOut } from 'lucide-react';
+import { Users, Calendar, MessageSquare, CreditCard, MapPin, Bell, LogOut, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function AdminDashboard() {
   const [admin, setAdmin] = useState(null);
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     users: 0,
     events: 0,
@@ -146,9 +148,15 @@ export default function AdminDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Event management interface coming soon...
-                </p>
+                <div className="space-y-4">
+                  <p className="text-muted-foreground">
+                    Manage all events in the system
+                  </p>
+                  <Button onClick={() => navigate('/admin/events')}>
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Go to Event Management
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

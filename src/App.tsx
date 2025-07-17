@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import Navigation from "./components/layout/Navigation";
 import Dashboard from "./pages/Dashboard";
 import Events from "./pages/Events";
@@ -14,6 +15,7 @@ import Feedback from "./pages/Feedback";
 import Profile from "./pages/Profile";
 import Subscription from "./pages/Subscription";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminEvents from "./pages/admin/AdminEvents";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -79,7 +81,16 @@ const App = () => (
                   <Subscription />
                 </ProtectedRoute>
               } />
-              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin" element={
+                <ProtectedAdminRoute>
+                  <AdminDashboard />
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/events" element={
+                <ProtectedAdminRoute>
+                  <AdminEvents />
+                </ProtectedAdminRoute>
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -374,6 +374,7 @@ export type Database = {
           location_lng: number | null
           onboarding_completed: boolean | null
           profile_photo_url: string | null
+          role: Database["public"]["Enums"]["user_role"]
           updated_at: string
           user_id: string
         }
@@ -397,6 +398,7 @@ export type Database = {
           location_lng?: number | null
           onboarding_completed?: boolean | null
           profile_photo_url?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           user_id: string
         }
@@ -420,6 +422,7 @@ export type Database = {
           location_lng?: number | null
           onboarding_completed?: boolean | null
           profile_photo_url?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           user_id?: string
         }
@@ -472,7 +475,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
     }
     Enums: {
       admin_role: "super_admin" | "moderator"
@@ -503,6 +509,7 @@ export type Database = {
         | "general"
       payment_status: "pending" | "completed" | "failed" | "refunded"
       subscription_plan: "monthly" | "yearly"
+      user_role: "user" | "admin" | "superadmin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -661,6 +668,7 @@ export const Constants = {
       ],
       payment_status: ["pending", "completed", "failed", "refunded"],
       subscription_plan: ["monthly", "yearly"],
+      user_role: ["user", "admin", "superadmin"],
     },
   },
 } as const
