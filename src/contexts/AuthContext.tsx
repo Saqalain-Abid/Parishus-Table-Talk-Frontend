@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         data: {
           first_name: metadata?.first_name,
           last_name: metadata?.last_name,
-          role: metadata?.role || 'user'
+          role: 'user' // Always assign 'user' role during signup
         }
       }
     });
