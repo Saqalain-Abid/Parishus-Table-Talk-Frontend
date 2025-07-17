@@ -5,9 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Crown, Shield, User } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import SocialAuth from './SocialAuth';
 
 const AuthPage = () => {
@@ -16,7 +15,8 @@ const AuthPage = () => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [role, setRole] = useState<'user' | 'admin' | 'superadmin'>('user');
+  // Role is always 'user' during signup
+  const role = 'user';
   const { signIn, signUp } = useAuth();
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -87,7 +87,6 @@ const AuthPage = () => {
         setPassword('');
         setFirstName('');
         setLastName('');
-        setRole('user');
       }
     } catch (error) {
       console.error('❌ Unexpected signup error:', error);
@@ -217,34 +216,6 @@ const AuthPage = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
-                    <Select value={role} onValueChange={(value: 'user' | 'admin' | 'superadmin') => setRole(value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            <span>User</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="admin">
-                          <div className="flex items-center gap-2">
-                            <Shield className="h-4 w-4" />
-                            <span>Admin / Moderator</span>
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="superadmin">
-                          <div className="flex items-center gap-2">
-                            <Crown className="h-4 w-4" />
-                            <span>SuperAdmin</span>
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                   <Button
                     type="submit"

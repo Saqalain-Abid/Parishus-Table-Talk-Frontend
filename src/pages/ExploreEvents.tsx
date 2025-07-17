@@ -49,29 +49,31 @@ const ExploreEvents = () => {
   useEffect(() => {
     console.log('🔍 ExploreEvents component mounted!', { user: !!user });
     
-    if (!user) {
-      console.log('❌ No user found, stopping execution');
-      setLoading(false);
-      return;
-    }
+    // Always proceed, even if no user is present
+    // This allows admins or logged-out users to see public events
 
     const initializeComponent = async () => {
       try {
-        console.log('👤 Getting user profile...');
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        
-        console.log('👤 Profile result:', { profile, profileError });
-        
-        if (profileError) {
-          console.error('❌ Profile error:', profileError);
-          setUserProfileId(null);
+        if (user) {
+          console.log('👤 Getting user profile...');
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          console.log('👤 Profile result:', { profile, profileError });
+          
+          if (profileError) {
+            console.error('❌ Profile error:', profileError);
+            setUserProfileId(null);
+          } else {
+            setUserProfileId(profile?.id || null);
+            console.log('✅ User profile ID set:', profile?.id);
+          }
         } else {
-          setUserProfileId(profile?.id || null);
-          console.log('✅ User profile ID set:', profile?.id);
+          console.log('👤 No user, skipping profile fetch');
+          setUserProfileId(null);
         }
 
         console.log('📅 Now fetching events...');
