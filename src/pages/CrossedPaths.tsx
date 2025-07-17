@@ -53,7 +53,11 @@ const CrossedPaths = () => {
         .eq('is_active', true)
         .order('matched_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching crossed paths:', error);
+        setCrossedPaths([]);
+        return;
+      }
 
       const formattedPaths = data?.map((path: any) => ({
         ...path,
@@ -62,6 +66,8 @@ const CrossedPaths = () => {
 
       setCrossedPaths(formattedPaths);
     } catch (error: any) {
+      console.error('Error in fetchCrossedPaths:', error);
+      setCrossedPaths([]);
       toast({
         title: "Error",
         description: "Failed to load crossed paths",

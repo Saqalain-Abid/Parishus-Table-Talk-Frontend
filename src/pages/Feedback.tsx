@@ -55,7 +55,7 @@ const Feedback = () => {
         .from('rsvps')
         .select(`
           event_id,
-          events (
+          events!inner (
             id,
             name,
             date_time,
@@ -67,11 +67,17 @@ const Feedback = () => {
         .eq('status', 'confirmed')
         .lt('events.date_time', new Date().toISOString());
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching attended events:', error);
+        setAttendedEvents([]);
+        return;
+      }
 
-      const events = data?.map(rsvp => rsvp.events).filter(Boolean) || [];
+      const events = data?.map((rsvp: any) => rsvp.events).filter(Boolean) || [];
       setAttendedEvents(events);
     } catch (error: any) {
+      console.error('Error in fetchAttendedEvents:', error);
+      setAttendedEvents([]);
       toast({
         title: "Error",
         description: "Failed to load attended events",

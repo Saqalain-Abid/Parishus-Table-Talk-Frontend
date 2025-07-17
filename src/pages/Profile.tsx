@@ -5,16 +5,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Camera, Edit, Save, X } from 'lucide-react';
+import { Camera, Edit, Save, X, CreditCard } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
   const [editing, setEditing] = useState(false);
+  const [editingPreferences, setEditingPreferences] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,8 +24,14 @@ const Profile = () => {
     job_title: '',
     location_city: ''
   });
+  const [preferenceData, setPreferenceData] = useState({
+    dining_style: '' as 'adventurous' | 'foodie_enthusiast' | 'local_lover' | 'comfort_food' | 'health_conscious' | 'social_butterfly' | '',
+    dietary_preferences: [] as ('vegetarian' | 'vegan' | 'gluten_free' | 'dairy_free' | 'keto' | 'paleo' | 'halal' | 'kosher' | 'no_restrictions')[],
+    gender_identity: '' as 'male' | 'female' | 'non_binary' | 'prefer_not_to_say' | ''
+  });
   const { user, signOut } = useAuth();
   const { profile, refetch } = useProfile();
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     if (profile) {
@@ -33,6 +40,11 @@ const Profile = () => {
         last_name: profile.last_name || '',
         job_title: profile.job_title || '',
         location_city: profile.location_city || ''
+      });
+      setPreferenceData({
+        dining_style: profile.dining_style || '',
+        dietary_preferences: profile.dietary_preferences || [],
+        gender_identity: profile.gender_identity || ''
       });
     }
   }, [profile]);
@@ -123,6 +135,60 @@ const Profile = () => {
       });
     }
     setEditing(false);
+  };
+
+  const handleSavePreferences = async () => {
+    if (!profile) return;
+
+    setLoading(true);
+    
+    try {
+      const updateData: any = {
+        dietary_preferences: preferenceData.dietary_preferences
+      };
+      
+      if (preferenceData.dining_style && preferenceData.dining_style.length > 0) {
+        updateData.dining_style = preferenceData.dining_style;
+      }
+      
+      if (preferenceData.gender_identity && preferenceData.gender_identity.length > 0) {
+        updateData.gender_identity = preferenceData.gender_identity;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', profile.id);
+
+      if (error) throw error;
+
+      await refetch();
+      setEditingPreferences(false);
+      
+      toast({
+        title: "Preferences updated!",
+        description: "Your preferences have been updated successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update preferences",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelPreferences = () => {
+    if (profile) {
+      setPreferenceData({
+        dining_style: profile.dining_style || '',
+        dietary_preferences: profile.dietary_preferences || [],
+        gender_identity: profile.gender_identity || ''
+      });
+    }
+    setEditingPreferences(false);
   };
 
   if (!profile) {
@@ -271,36 +337,136 @@ const Profile = () => {
 
           <Card className="shadow-card border-border">
             <CardHeader>
-              <CardTitle>Preferences</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                Preferences
+                {!editingPreferences ? (
+                  <Button onClick={() => setEditingPreferences(true)} variant="outline" size="sm">
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                ) : (
+                  <div className="flex space-x-2">
+                    <Button onClick={handleSavePreferences} disabled={loading} size="sm" className="bg-peach-gold hover:bg-peach-gold/90 text-background">
+                      <Save className="h-4 w-4 mr-2" />
+                      {loading ? 'Saving...' : 'Save'}
+                    </Button>
+                    <Button onClick={handleCancelPreferences} variant="outline" size="sm">
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Label>Dining Style</Label>
-                <p className="text-foreground p-2 bg-muted rounded-md mt-1">
-                  {profile.dining_style ? profile.dining_style.replace('_', ' ') : 'Not set'}
-                </p>
+                {editingPreferences ? (
+                  <Select value={preferenceData.dining_style} onValueChange={(value: any) => setPreferenceData(prev => ({ ...prev, dining_style: value }))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select dining style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="adventurous">Adventurous</SelectItem>
+                      <SelectItem value="foodie_enthusiast">Foodie Enthusiast</SelectItem>
+                      <SelectItem value="local_lover">Local Lover</SelectItem>
+                      <SelectItem value="comfort_food">Comfort Food</SelectItem>
+                      <SelectItem value="health_conscious">Health Conscious</SelectItem>
+                      <SelectItem value="social_butterfly">Social Butterfly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-foreground p-2 bg-muted rounded-md mt-1">
+                    {profile.dining_style ? profile.dining_style.replace('_', ' ') : 'Not set'}
+                  </p>
+                )}
               </div>
               
               <div>
                 <Label>Dietary Preferences</Label>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {profile.dietary_preferences && profile.dietary_preferences.length > 0 ? (
-                    profile.dietary_preferences.map((pref) => (
-                      <Badge key={pref} variant="secondary">
-                        {pref.replace('_', ' ')}
-                      </Badge>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground">None set</p>
-                  )}
-                </div>
+                {editingPreferences ? (
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    {['vegetarian', 'vegan', 'gluten_free', 'dairy_free', 'keto', 'paleo', 'halal', 'kosher', 'no_restrictions'].map((pref) => (
+                      <label key={pref} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={preferenceData.dietary_preferences.includes(pref as any)}
+                           onChange={(e) => {
+                            const typedPref = pref as 'vegetarian' | 'vegan' | 'gluten_free' | 'dairy_free' | 'keto' | 'paleo' | 'halal' | 'kosher' | 'no_restrictions';
+                            if (e.target.checked) {
+                              setPreferenceData(prev => ({
+                                ...prev,
+                                dietary_preferences: [...prev.dietary_preferences, typedPref]
+                              }));
+                            } else {
+                              setPreferenceData(prev => ({
+                                ...prev,
+                                dietary_preferences: prev.dietary_preferences.filter(p => p !== typedPref)
+                              }));
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <span className="text-sm">{pref.replace('_', ' ')}</span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {profile.dietary_preferences && profile.dietary_preferences.length > 0 ? (
+                      profile.dietary_preferences.map((pref) => (
+                        <Badge key={pref} variant="secondary">
+                          {pref.replace('_', ' ')}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground">None set</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
                 <Label>Gender Identity</Label>
-                <p className="text-foreground p-2 bg-muted rounded-md mt-1">
-                  {profile.gender_identity ? profile.gender_identity.replace('_', ' ') : 'Not set'}
-                </p>
+                {editingPreferences ? (
+                  <Select value={preferenceData.gender_identity} onValueChange={(value: any) => setPreferenceData(prev => ({ ...prev, gender_identity: value }))}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select gender identity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="non_binary">Non-binary</SelectItem>
+                      <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-foreground p-2 bg-muted rounded-md mt-1">
+                    {profile.gender_identity ? profile.gender_identity.replace('_', ' ') : 'Not set'}
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-card border-border">
+            <CardHeader>
+              <CardTitle>Subscription</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Manage Subscription</h3>
+                  <p className="text-muted-foreground">View and manage your subscription plan</p>
+                </div>
+                <Button
+                  onClick={() => navigate('/subscription')}
+                  variant="outline"
+                  className="flex items-center space-x-2"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  <span>Manage</span>
+                </Button>
               </div>
             </CardContent>
           </Card>
