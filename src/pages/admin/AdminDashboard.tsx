@@ -1,257 +1,407 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Calendar, MessageSquare, CreditCard, MapPin, Bell, LogOut, ExternalLink } from 'lucide-react';
+import { 
+  Users, 
+  Calendar, 
+  DollarSign, 
+  TrendingUp, 
+  Search, 
+  UserCheck, 
+  UserX, 
+  Edit,
+  Trash2,
+  Ban,
+  CheckCircle,
+  AlertTriangle,
+  Star,
+  Shield,
+  Crown
+} from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 
-export default function AdminDashboard() {
+const AdminDashboard = () => {
   const { user, signOut } = useAuth();
-  const { profile, loading: profileLoading } = useProfile();
+  const { profile } = useProfile();
   const navigate = useNavigate();
+
   const [stats, setStats] = useState({
-    users: 0,
-    events: 0,
-    feedback: 0,
-    payments: 0,
-    crossedPaths: 0,
-    notifications: 0
+    totalUsers: 0,
+    activeUsers: 0,
+    totalEvents: 0,
+    monthlyRSVPs: 0,
+    flaggedFeedback: 0,
+    revenue: 0
   });
+  
+  const [users, setUsers] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [feedback, setFeedback] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (profile && (profile.role === 'admin' || profile.role === 'superadmin')) {
-      fetchStats();
+      fetchDashboardData();
+      setupRealTimeUpdates();
     }
   }, [profile]);
 
-  const fetchStats = async () => {
+  const fetchDashboardData = async () => {
     try {
-      const [
-        { count: usersCount },
-        { count: eventsCount },
-        { count: feedbackCount },
-        { count: paymentsCount },
-        { count: crossedPathsCount },
-        { count: notificationsCount }
-      ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('events').select('*', { count: 'exact', head: true }),
-        supabase.from('feedback').select('*', { count: 'exact', head: true }),
-        supabase.from('payments').select('*', { count: 'exact', head: true }),
-        supabase.from('crossed_paths').select('*', { count: 'exact', head: true }),
-        supabase.from('notifications').select('*', { count: 'exact', head: true })
+      // Fetch stats
+      const [usersData, eventsData, feedbackData, paymentsData] = await Promise.all([
+        supabase.from('profiles').select('*'),
+        supabase.from('events').select('*'),
+        supabase.from('feedback').select('*'),
+        supabase.from('payments').select('*')
       ]);
 
+      const activeUsers = usersData.data?.filter(u => u.onboarding_completed && !u.is_suspended).length || 0;
+      const flaggedFeedback = feedbackData.data?.filter(f => f.flagged_users && f.flagged_users.length > 0).length || 0;
+      const revenue = paymentsData.data?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+
       setStats({
-        users: usersCount || 0,
-        events: eventsCount || 0,
-        feedback: feedbackCount || 0,
-        payments: paymentsCount || 0,
-        crossedPaths: crossedPathsCount || 0,
-        notifications: notificationsCount || 0
+        totalUsers: usersData.data?.length || 0,
+        activeUsers,
+        totalEvents: eventsData.data?.length || 0,
+        monthlyRSVPs: 0, // Would need to calculate from RSVPs
+        flaggedFeedback,
+        revenue: revenue / 100 // Convert from cents
       });
+
+      setUsers(usersData.data || []);
+      setEvents(eventsData.data || []);
+      setFeedback(feedbackData.data || []);
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/');
+  const setupRealTimeUpdates = () => {
+    const channel = supabase.channel('admin-dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        fetchDashboardData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+        fetchDashboardData();
+      })
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
   };
 
-  // Loading state
-  if (profileLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-peach-gold" />
-          <p className="text-muted-foreground">Loading admin dashboard...</p>
-        </div>
-      </div>
-    );
+  const suspendUser = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_suspended: true })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({ title: "User suspended successfully" });
+      fetchDashboardData();
+    } catch (error) {
+      toast({ title: "Error suspending user", variant: "destructive" });
+    }
+  };
+
+  const reactivateUser = async (userId: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_suspended: false })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({ title: "User reactivated successfully" });
+      fetchDashboardData();
+    } catch (error) {
+      toast({ title: "Error reactivating user", variant: "destructive" });
+    }
+  };
+
+  const deleteEvent = async (eventId: string) => {
+    if (!confirm('Are you sure you want to delete this event?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId);
+
+      if (error) throw error;
+
+      toast({ title: "Event deleted successfully" });
+      fetchDashboardData();
+    } catch (error) {
+      toast({ title: "Error deleting event", variant: "destructive" });
+    }
+  };
+
+  const markFeedbackAddressed = async (feedbackId: string) => {
+    try {
+      const { error } = await supabase
+        .from('feedback')
+        .update({ is_addressed: true })
+        .eq('id', feedbackId);
+
+      if (error) throw error;
+
+      toast({ title: "Feedback marked as addressed" });
+      fetchDashboardData();
+    } catch (error) {
+      toast({ title: "Error updating feedback", variant: "destructive" });
+    }
+  };
+
+  const filteredUsers = users.filter(user => 
+    `${user.first_name} ${user.last_name} ${user.email}`.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
-  // Check if user is authorized
   if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
-            <CardDescription>You don't have permission to access this area.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => navigate('/')} className="w-full">
-              Return to Home
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen">Access denied</div>;
   }
-
-  const statCards = [
-    { title: 'Total Users', value: stats.users, icon: Users, color: 'text-blue-500' },
-    { title: 'Active Events', value: stats.events, icon: Calendar, color: 'text-green-500' },
-    { title: 'Feedback Items', value: stats.feedback, icon: MessageSquare, color: 'text-orange-500' },
-    { title: 'Payments', value: stats.payments, icon: CreditCard, color: 'text-purple-500' },
-    { title: 'Crossed Paths', value: stats.crossedPaths, icon: MapPin, color: 'text-pink-500' },
-    { title: 'Notifications', value: stats.notifications, icon: Bell, color: 'text-cyan-500' }
-  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b">
-        <div className="flex h-16 items-center justify-between px-6">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-semibold">Admin Dashboard</h1>
-            <Badge variant="outline">
-              {profile.role === 'superadmin' ? 'Super Admin' : 'Admin'}
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
+            <Badge variant="outline" className="flex items-center space-x-1">
+              {profile.role === 'superadmin' ? <Crown className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
+              <span>{profile.role === 'superadmin' ? 'Super Admin' : 'Admin'}</span>
             </Badge>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">
-              Welcome, {profile.first_name} {profile.last_name}
-            </span>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {statCards.map((stat) => (
-            <Card key={stat.title}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {stat.title}
-                </CardTitle>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-              </CardContent>
-            </Card>
-          ))}
+          <Button onClick={() => signOut()} variant="outline">Sign Out</Button>
         </div>
 
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              <p className="text-xs text-muted-foreground">{stats.activeUsers} active</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Events</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalEvents}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Flagged Feedback</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.flaggedFeedback}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${stats.revenue.toFixed(2)}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Management Tabs */}
         <Tabs defaultValue="users" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="events">Events</TabsTrigger>
-            <TabsTrigger value="feedback">Feedback</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
-            <TabsTrigger value="crossed-paths">Crossed Paths</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="events">Event Management</TabsTrigger>
+            <TabsTrigger value="feedback">Feedback Moderation</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="users">
+          <TabsContent value="users" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>User Management</CardTitle>
-                <CardDescription>
-                  Manage user accounts and profiles
-                </CardDescription>
+                <div className="flex items-center space-x-2">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search users..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="max-w-sm"
+                  />
+                </div>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  User management interface coming soon...
-                </p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.slice(0, 10).map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>{user.first_name} {user.last_name}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{user.role}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={user.is_suspended ? "destructive" : "default"}>
+                            {user.is_suspended ? "Suspended" : "Active"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            {user.is_suspended ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => reactivateUser(user.id)}
+                              >
+                                <UserCheck className="h-3 w-3" />
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => suspendUser(user.id)}
+                              >
+                                <Ban className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="events">
+          <TabsContent value="events" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle>Event Management</CardTitle>
-                <CardDescription>
-                  View and manage all events
-                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <p className="text-muted-foreground">
-                    Manage all events in the system
-                  </p>
-                  <Button onClick={() => navigate('/admin/events')}>
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Go to Event Management
-                  </Button>
-                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Event Name</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {events.slice(0, 10).map((event) => (
+                      <TableRow key={event.id}>
+                        <TableCell>{event.name}</TableCell>
+                        <TableCell>{new Date(event.date_time).toLocaleDateString()}</TableCell>
+                        <TableCell>{event.location_name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{event.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => deleteEvent(event.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="feedback">
+          <TabsContent value="feedback" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Feedback Management</CardTitle>
-                <CardDescription>
-                  Review and moderate user feedback
-                </CardDescription>
+                <CardTitle>Feedback Moderation</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Feedback management interface coming soon...
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="payments">
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Management</CardTitle>
-                <CardDescription>
-                  Monitor subscriptions and payments
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Payment management interface coming soon...
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="crossed-paths">
-            <Card>
-              <CardHeader>
-                <CardTitle>Crossed Paths</CardTitle>
-                <CardDescription>
-                  View user location matches
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Crossed paths management interface coming soon...
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="notifications">
-            <Card>
-              <CardHeader>
-                <CardTitle>Notifications</CardTitle>
-                <CardDescription>
-                  Send and manage notifications
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Notification management interface coming soon...
-                </p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Rating</TableHead>
+                      <TableHead>Comment</TableHead>
+                      <TableHead>Flagged</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {feedback.slice(0, 10).map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div className="flex items-center">
+                            {[...Array(item.rating)].map((_, i) => (
+                              <Star key={i} className="h-3 w-3 fill-current text-yellow-400" />
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate">{item.comment}</TableCell>
+                        <TableCell>
+                          {item.flagged_users && item.flagged_users.length > 0 ? (
+                            <Badge variant="destructive">Flagged</Badge>
+                          ) : (
+                            <Badge variant="outline">Clean</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>{new Date(item.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => markFeedbackAddressed(item.id)}
+                          >
+                            <CheckCircle className="h-3 w-3" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </CardContent>
             </Card>
           </TabsContent>
@@ -259,4 +409,6 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
-}
+};
+
+export default AdminDashboard;
