@@ -16,18 +16,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  if (authLoading || profileLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-peach-gold" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Role-based redirect logic - ALL useEffect hooks must be at top level
+  // ALL HOOKS MUST BE CALLED FIRST - before any conditional logic or early returns
   useEffect(() => {
     if (user && profile) {
       const currentPath = location.pathname;
@@ -51,6 +40,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       }
     }
   }, [user, profile, navigate, location.pathname]);
+
+  // NOW we can do conditional logic and early returns
+  if (authLoading || profileLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-peach-gold" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <AuthPage />;
