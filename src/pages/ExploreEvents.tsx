@@ -47,23 +47,35 @@ const ExploreEvents = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('ExploreEvents useEffect running', { user });
     const getUserProfile = async () => {
       if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .single();
-        setUserProfileId(profile?.id || null);
+        try {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+          
+          console.log('Profile data:', profile, 'Error:', error);
+          setUserProfileId(profile?.id || null);
+        } catch (error) {
+          console.error('Error getting profile:', error);
+          setUserProfileId(null);
+        }
+      } else {
+        setUserProfileId(null);
       }
     };
     
     getUserProfile().then(() => {
+      console.log('About to fetch events');
       fetchEvents();
     });
   }, [user]);
 
   const fetchEvents = async () => {
+    console.log('fetchEvents called');
     try {
       const { data, error } = await supabase
         .from('events')
@@ -83,6 +95,8 @@ const ExploreEvents = () => {
         .eq('status', 'active')
         .order('date_time', { ascending: true });
 
+      console.log('Events data:', data, 'Error:', error);
+
       if (error) throw error;
 
       const eventsWithCounts = data?.map(event => ({
@@ -91,6 +105,7 @@ const ExploreEvents = () => {
         user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
       })) || [];
 
+      console.log('Events with counts:', eventsWithCounts);
       setEvents(eventsWithCounts);
     } catch (error) {
       console.error('Error fetching events:', error);
@@ -235,8 +250,8 @@ const ExploreEvents = () => {
           </div>
 
           {event.description && (
-            <p className="text-sm text-muted-foreground line-clamp-3">
-              {event.description}
+            <p className="text-sm text-muted-foreground">
+              {event.description.length > 150 ? event.description.substring(0, 150) + '...' : event.description}
             </p>
           )}
 
@@ -275,6 +290,8 @@ const ExploreEvents = () => {
       </Card>
     );
   };
+
+  console.log('Component render:', { loading, events, filteredEvents: filteredEvents.length });
 
   if (loading) {
     return (
