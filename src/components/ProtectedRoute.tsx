@@ -19,51 +19,67 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   // ALL HOOKS MUST BE CALLED FIRST - before any conditional logic or early returns
   useEffect(() => {
     // Only run redirection logic when we have both user and profile data
-    if (user && profile) {
+    if (user && profile && !authLoading && !profileLoading) {
       const currentPath = location.pathname;
+      
+      console.log('🔍 ProtectedRoute: Checking user role and redirection', {
+        userEmail: user.email,
+        profileRole: profile.role,
+        currentPath,
+        onboardingCompleted: profile.onboarding_completed
+      });
       
       // Skip redirection if we're already on auth pages
       if (currentPath.startsWith('/auth')) {
+        console.log('🔄 ProtectedRoute: Skipping redirect - on auth page');
         return;
       }
       
-      console.log('ProtectedRoute: Checking redirects for user role:', profile.role, 'onboarding:', profile.onboarding_completed, 'path:', currentPath);
-      
       // Role-based redirection logic
       if (profile.role === 'superadmin') {
+        console.log('👑 ProtectedRoute: SuperAdmin detected');
         // SuperAdmin should go to /admin/dashboard
         if (currentPath === '/' || currentPath === '/admin') {
-          console.log('ProtectedRoute: Redirecting superadmin to /admin/dashboard');
+          console.log('🔄 ProtectedRoute: Redirecting superadmin to /admin/dashboard');
           navigate('/admin/dashboard', { replace: true });
           return;
         }
       } else if (profile.role === 'admin') {
-        // Admin should go to /admin/dashboard (not /admin/events)
+        console.log('🛡️ ProtectedRoute: Admin detected');
+        // Admin should go to /admin/dashboard
         if (currentPath === '/' || currentPath === '/admin') {
-          console.log('ProtectedRoute: Redirecting admin to /admin/dashboard');
+          console.log('🔄 ProtectedRoute: Redirecting admin to /admin/dashboard');
           navigate('/admin/dashboard', { replace: true });
           return;
         }
       } else if (profile.role === 'user') {
+        console.log('👤 ProtectedRoute: Regular user detected');
         // Prevent users from accessing admin routes
         if (currentPath.startsWith('/admin')) {
-          console.log('ProtectedRoute: Redirecting user away from admin area to /');
+          console.log('🔒 ProtectedRoute: Redirecting user away from admin area to /');
           navigate('/', { replace: true });
           return;
         }
         
         // Handle user onboarding flow - if not completed, show onboarding
         if (!profile.onboarding_completed) {
-          console.log('ProtectedRoute: User needs onboarding');
+          console.log('📝 ProtectedRoute: User needs onboarding');
           // The onboarding check below will handle this
           return;
         }
         
         // User is completed and should stay on regular user routes
-        console.log('ProtectedRoute: User has completed onboarding, staying on user routes');
+        console.log('✅ ProtectedRoute: User has completed onboarding, staying on user routes');
       }
+    } else {
+      console.log('⏳ ProtectedRoute: Waiting for user/profile data', {
+        hasUser: !!user,
+        hasProfile: !!profile,
+        authLoading,
+        profileLoading
+      });
     }
-  }, [user, profile, navigate, location.pathname]);
+  }, [user, profile, navigate, location.pathname, authLoading, profileLoading]);
 
   // NOW we can do conditional logic and early returns
   if (authLoading || profileLoading) {
