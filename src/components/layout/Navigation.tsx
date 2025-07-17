@@ -15,15 +15,17 @@ import {
   User, 
   LogOut, 
   Settings,
-  Bell,
   Heart,
   Star,
   CreditCard
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
+import { useProfile } from '@/hooks/useProfile';
 
 const Navigation = () => {
   const { user, signOut } = useAuth();
+  const { profile } = useProfile();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -75,18 +77,15 @@ const Navigation = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-3 w-3 bg-peach-gold rounded-full"></span>
-            </Button>
+            <NotificationCenter />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.user_metadata?.avatar_url} />
+                    <AvatarImage src={profile?.profile_photo_url || ''} />
                     <AvatarFallback className="bg-peach-gold/20 text-peach-gold">
-                      {user?.email?.charAt(0).toUpperCase()}
+                      {profile?.first_name?.[0]}{profile?.last_name?.[0]}
                     </AvatarFallback>
                   </Avatar>
                 </Button>

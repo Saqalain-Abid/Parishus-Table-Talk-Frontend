@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Crown, Shield, User } from 'lucide-react';
+import SocialAuth from './SocialAuth';
 
 const AuthPage = () => {
   const [loading, setLoading] = useState(false);
@@ -165,6 +166,8 @@ const AuthPage = () => {
                     )}
                   </Button>
                 </form>
+
+                <SocialAuth mode="signin" />
               </TabsContent>
               
               <TabsContent value="signup" className="space-y-4">
@@ -258,6 +261,8 @@ const AuthPage = () => {
                     )}
                   </Button>
                 </form>
+
+                <SocialAuth mode="signup" />
               </TabsContent>
             </Tabs>
           </CardContent>
