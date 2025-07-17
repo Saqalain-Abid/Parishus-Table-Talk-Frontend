@@ -79,7 +79,6 @@ const Events = () => {
           )
         `)
         .eq('status', 'active')
-        .gte('date_time', new Date().toISOString())
         .order('date_time', { ascending: true });
 
       if (error) throw error;
