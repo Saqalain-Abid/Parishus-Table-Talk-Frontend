@@ -27,19 +27,27 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  // Role-based redirect logic
+  // Role-based redirect logic - ALL useEffect hooks must be at top level
   useEffect(() => {
-    if (user && profile && profile.onboarding_completed) {
+    if (user && profile) {
       const currentPath = location.pathname;
       
-      // Redirect based on role after successful auth
-      if (profile.role === 'superadmin' && currentPath === '/') {
+      // Handle admin users who haven't completed onboarding
+      if (!profile.onboarding_completed && (profile.role === 'admin' || profile.role === 'superadmin')) {
         navigate('/admin', { replace: true });
-      } else if (profile.role === 'admin' && currentPath === '/') {
-        navigate('/admin', { replace: true });
-      } else if (profile.role === 'user' && currentPath.startsWith('/admin')) {
-        // Prevent regular users from accessing admin routes
-        navigate('/', { replace: true });
+        return;
+      }
+      
+      // Handle completed onboarding redirects
+      if (profile.onboarding_completed) {
+        if (profile.role === 'superadmin' && currentPath === '/') {
+          navigate('/admin', { replace: true });
+        } else if (profile.role === 'admin' && currentPath === '/') {
+          navigate('/admin', { replace: true });
+        } else if (profile.role === 'user' && currentPath.startsWith('/admin')) {
+          // Prevent regular users from accessing admin routes
+          navigate('/', { replace: true });
+        }
       }
     }
   }, [user, profile, navigate, location.pathname]);
@@ -52,13 +60,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <OnboardingFlow />;
   }
 
-  // Skip onboarding for admin users - they go directly to admin panel
+  // Show loading for admin users being redirected
   if (profile && !profile.onboarding_completed && (profile.role === 'admin' || profile.role === 'superadmin')) {
-    // Redirect admin users directly to admin panel, skipping onboarding
-    useEffect(() => {
-      navigate('/admin', { replace: true });
-    }, [navigate]);
-    
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
