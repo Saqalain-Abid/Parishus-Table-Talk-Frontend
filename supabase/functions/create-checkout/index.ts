@@ -36,10 +36,8 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    const prices = {
-      monthly: 999, // $9.99
-      yearly: 9999, // $99.99
-    };
+    const priceId = plan === 'yearly' ? 'price_yearly' : 'price_monthly';
+    const unitAmount = plan === 'yearly' ? 9999 : 999; // $99.99 or $9.99
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -48,8 +46,11 @@ serve(async (req) => {
         {
           price_data: {
             currency: "usd",
-            product_data: { name: `ParishUs ${plan} Plan` },
-            unit_amount: prices[plan as keyof typeof prices],
+            product_data: { 
+              name: "ParishUs Premium Subscription",
+              description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} subscription to ParishUs premium features`
+            },
+            unit_amount: unitAmount,
             recurring: { interval: plan === 'yearly' ? 'year' : 'month' },
           },
           quantity: 1,
@@ -57,7 +58,7 @@ serve(async (req) => {
       ],
       mode: "subscription",
       success_url: `${req.headers.get("origin")}/dashboard?success=true`,
-      cancel_url: `${req.headers.get("origin")}/dashboard?canceled=true`,
+      cancel_url: `${req.headers.get("origin")}/subscription?cancelled=true`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
@@ -65,6 +66,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    console.error("Error creating checkout session:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

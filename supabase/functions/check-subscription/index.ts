@@ -23,7 +23,9 @@ serve(async (req) => {
     if (!authHeader) throw new Error("No authorization header");
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData } = await supabaseClient.auth.getUser(token);
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError) throw userError;
+    
     const user = userData.user;
     if (!user?.email) throw new Error("User not authenticated");
 
@@ -34,13 +36,18 @@ serve(async (req) => {
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
     if (customers.data.length === 0) {
+      // No Stripe customer found, update database
       await supabaseClient.from("payments").upsert({
         user_id: user.id,
         status: "pending",
+        plan: null,
+        amount: null,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'user_id' });
       
-      return new Response(JSON.stringify({ subscribed: false }), {
+      return new Response(JSON.stringify({ 
+        subscribed: false 
+      }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -54,38 +61,37 @@ serve(async (req) => {
     });
 
     const hasActiveSub = subscriptions.data.length > 0;
-    let plan = null;
+    let subscriptionTier = null;
     let subscriptionEnd = null;
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
       subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
       
-      const priceId = subscription.items.data[0].price.id;
-      const price = await stripe.prices.retrieve(priceId);
-      const amount = price.unit_amount || 0;
-      
-      plan = amount >= 5000 ? "yearly" : "monthly";
+      const price = subscription.items.data[0].price;
+      subscriptionTier = price.recurring?.interval === 'year' ? 'yearly' : 'monthly';
     }
 
+    // Update payments table
     await supabaseClient.from("payments").upsert({
       user_id: user.id,
       stripe_customer_id: customerId,
       status: hasActiveSub ? "completed" : "pending",
-      plan: plan,
+      plan: subscriptionTier,
       subscription_end: subscriptionEnd,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'user_id' });
 
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
-      plan: plan,
+      plan: subscriptionTier,
       subscription_end: subscriptionEnd
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
+    console.error("Error checking subscription:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
