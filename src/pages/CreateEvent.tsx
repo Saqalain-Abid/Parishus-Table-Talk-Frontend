@@ -107,7 +107,7 @@ const CreateEvent = () => {
       const { data, error } = await supabase
         .from('events')
         .insert({
-          creator_id: user.id,
+          creator_id: profile.id,
           name: formData.name,
           description: formData.description,
           date_time: dateTime.toISOString(),

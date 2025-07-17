@@ -15,7 +15,9 @@ import {
   User, 
   LogOut, 
   Settings,
-  Bell
+  Bell,
+  Heart,
+  Star
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -33,7 +35,8 @@ const Navigation = () => {
     { icon: Home, label: 'Home', path: '/' },
     { icon: Calendar, label: 'My Events', path: '/events' },
     { icon: Search, label: 'Explore', path: '/explore' },
-    { icon: User, label: 'Crossed Paths', path: '/crossed-paths' },
+    { icon: Heart, label: 'Crossed Paths', path: '/crossed-paths' },
+    { icon: Star, label: 'Feedback', path: '/feedback' },
   ];
 
   return (
@@ -87,6 +90,10 @@ const Navigation = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuItem onClick={() => navigate('/profile')}>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/profile')}>
                   <Settings className="mr-2 h-4 w-4" />
                   Settings

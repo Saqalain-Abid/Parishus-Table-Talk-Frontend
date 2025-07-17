@@ -9,6 +9,9 @@ import Navigation from "./components/layout/Navigation";
 import Dashboard from "./pages/Dashboard";
 import Events from "./pages/Events";
 import CreateEvent from "./pages/CreateEvent";
+import CrossedPaths from "./pages/CrossedPaths";
+import Feedback from "./pages/Feedback";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,19 +56,19 @@ const App = () => (
               <Route path="/crossed-paths" element={
                 <ProtectedRoute>
                   <Navigation />
-                  <div className="p-8 text-center">
-                    <h1 className="text-2xl font-bold">Crossed Paths</h1>
-                    <p className="text-muted-foreground mt-2">Coming soon...</p>
-                  </div>
+                  <CrossedPaths />
+                </ProtectedRoute>
+              } />
+              <Route path="/feedback" element={
+                <ProtectedRoute>
+                  <Navigation />
+                  <Feedback />
                 </ProtectedRoute>
               } />
               <Route path="/profile" element={
                 <ProtectedRoute>
                   <Navigation />
-                  <div className="p-8 text-center">
-                    <h1 className="text-2xl font-bold">Profile Settings</h1>
-                    <p className="text-muted-foreground mt-2">Coming soon...</p>
-                  </div>
+                  <Profile />
                 </ProtectedRoute>
               } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
