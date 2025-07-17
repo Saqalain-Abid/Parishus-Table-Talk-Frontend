@@ -52,10 +52,10 @@ const App = () => (
                 </ProtectedRoute>
               } />
               <Route path="/explore" element={
-                <ProtectedRoute>
+                <>
                   <Navigation />
                   <ExploreEvents />
-                </ProtectedRoute>
+                </>
               } />
               <Route path="/crossed-paths" element={
                 <ProtectedRoute>
