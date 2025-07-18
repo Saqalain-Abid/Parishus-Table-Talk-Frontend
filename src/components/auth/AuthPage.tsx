@@ -34,7 +34,7 @@ const AuthPage = () => {
         });
       } else {
         const { data, error: fetchError } = await supabase
-          .from('users')
+          .from('profiles')
           .select('role')
           .eq('id', user?.id)
           .single();
