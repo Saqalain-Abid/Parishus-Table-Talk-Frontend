@@ -32,11 +32,20 @@ const AuthPage = () => {
           variant: "destructive"
         });
       } else {
-        alert("fdfjdfd");
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in.",
         });
+        const role = user?.role;  
+        alert(role);
+        return false;
+      if (role === 'superadmin') {
+        router.push('/superadmin/dashboard');
+      } else if (role === 'admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/user/dashboard');
+      }
       }
     } catch (error) {
       toast({
