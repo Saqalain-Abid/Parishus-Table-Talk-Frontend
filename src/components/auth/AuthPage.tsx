@@ -19,45 +19,34 @@ const AuthPage = () => {
   const role = 'user';
   const { signIn, signUp } = useAuth();
 
- const handleSignIn = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+    
     try {
-      const { error, user } = await signIn(email, password);
-
+      const { error } = await signIn(email, password);
       if (error) {
         toast({
-          title: 'Error',
+          title: "Error",
           description: error.message,
-          variant: 'destructive'
+          variant: "destructive"
         });
       } else {
         toast({
-          title: 'Welcome back!',
-          description: "You've successfully signed in."
+          title: "Welcome back!",
+          description: "You've successfully signed in.",
         });
-
-        const role = user?.role || user?.user_metadata?.role;
-        if (role === 'superadmin') {
-          router.push('/superadmin/dashboard');
-        } else if (role === 'admin') {
-          router.push('/admin/dashboard');
-        } else {
-          router.push('/user/dashboard');
-        }
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred.',
-        variant: 'destructive'
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
