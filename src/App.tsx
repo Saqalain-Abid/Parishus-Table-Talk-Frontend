@@ -19,6 +19,8 @@ import AdminEvents from "./pages/admin/AdminEvents";
 import ExploreEvents from "./pages/ExploreEvents";
 import TestAuthSystem from "./components/auth/TestAuthSystem";
 import RoleDebugger from "./components/auth/RoleDebugger";
+import UserDashboard from "./pages/UserDashboard";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -80,6 +82,17 @@ const App = () => (
                   <Navigation />
                   <Subscription />
                 </ProtectedRoute>
+              } />
+              <Route path="/user/dashboard" element={
+                <ProtectedRoute>
+                  <Navigation />
+                  <UserDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/superadmin/dashboard" element={
+                <ProtectedAdminRoute requireSuperAdmin={true}>
+                  <SuperAdminDashboard />
+                </ProtectedAdminRoute>
               } />
               <Route path="/admin/dashboard" element={
                 <ProtectedAdminRoute requireSuperAdmin={false}>

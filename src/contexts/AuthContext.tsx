@@ -70,10 +70,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
+    
+    // If login successful, redirect based on user role
+    if (!error && data.user) {
+      // Get user profile to determine role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', data.user.id)
+        .single();
+      
+      if (profile?.role) {
+        setTimeout(() => {
+          switch (profile.role) {
+            case 'superadmin':
+              window.location.href = '/superadmin/dashboard';
+              break;
+            case 'admin':
+              window.location.href = '/admin/dashboard';
+              break;
+            case 'user':
+            default:
+              window.location.href = '/user/dashboard';
+              break;
+          }
+        }, 100); // Small delay to ensure auth state is updated
+      }
+    }
+    
     return { error };
   };
 
