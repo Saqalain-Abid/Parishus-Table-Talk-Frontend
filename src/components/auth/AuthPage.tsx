@@ -9,6 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import SocialAuth from './SocialAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 type Profile = {
   id: string;
@@ -16,6 +17,7 @@ type Profile = {
   role: string;
   first_name: string;
   last_name: string;
+  onboarding_completed: boolean;
 };
 
 const AuthPage = () => {
@@ -27,6 +29,7 @@ const AuthPage = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const { user, signIn, signUp } = useAuth();
   const role = 'user';
+  const navigate = useNavigate();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,8 +62,20 @@ const AuthPage = () => {
             .single();
 
           if (!profileError && profileData) {
-            alert(profileData.role);
             setProfile(profileData);
+
+            if (profileData.role === 'superadmin' || profileData.role === 'admin') {
+              navigate('/admin/dashboard', { replace: true });
+              return;
+            }
+
+            if (profileData.role === 'user') {
+              if (!profileData.onboarding_completed) {
+                navigate('/onboarding', { replace: true });
+              } else {
+                navigate('/', { replace: true });
+              }
+            }
           }
         }
       }
