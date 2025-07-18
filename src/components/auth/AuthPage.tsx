@@ -32,6 +32,7 @@ const AuthPage = () => {
           variant: "destructive"
         });
       } else {
+        alert("fdfjdfd");
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in.",
