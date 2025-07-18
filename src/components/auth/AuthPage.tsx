@@ -36,6 +36,7 @@ const AuthPage = () => {
           title: "Welcome back!",
           description: "You've successfully signed in.",
         });
+        alert("fdjfkdjkfdjkfd");
       }
     } catch (error) {
       toast({
