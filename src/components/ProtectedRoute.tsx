@@ -35,19 +35,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         return;
       }
       
-      // Role-based redirection logic
+      // Role-based redirection logic - Admins should ALWAYS be redirected to admin area
       if (profile.role === 'superadmin') {
         console.log('👑 ProtectedRoute: SuperAdmin detected');
-        // SuperAdmin should go to /admin/dashboard
-        if (currentPath === '/' || currentPath === '/admin') {
+        // SuperAdmin should always go to /admin/dashboard unless already on admin routes
+        if (!currentPath.startsWith('/admin')) {
           console.log('🔄 ProtectedRoute: Redirecting superadmin to /admin/dashboard');
           navigate('/admin/dashboard', { replace: true });
           return;
         }
       } else if (profile.role === 'admin') {
         console.log('🛡️ ProtectedRoute: Admin detected');
-        // Admin should go to /admin/dashboard
-        if (currentPath === '/' || currentPath === '/admin') {
+        // Admin should always go to /admin/dashboard unless already on admin routes
+        if (!currentPath.startsWith('/admin')) {
           console.log('🔄 ProtectedRoute: Redirecting admin to /admin/dashboard');
           navigate('/admin/dashboard', { replace: true });
           return;
