@@ -1,7 +1,4 @@
-'use client';
-
 import React, { useState } from 'react';
-import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,48 +10,38 @@ import { Loader2 } from 'lucide-react';
 import SocialAuth from './SocialAuth';
 
 const AuthPage = () => {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  // Role is always 'user' during signup
   const role = 'user';
   const { signIn, signUp } = useAuth();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+    
     try {
-      const { error, user } = await signIn(email, password);
-
+      const { error } = await signIn(email, password);
       if (error) {
         toast({
-          title: 'Error',
+          title: "Error",
           description: error.message,
-          variant: 'destructive'
+          variant: "destructive"
         });
       } else {
         toast({
-          title: 'Welcome back!',
-          description: "You've successfully signed in."
+          title: "Welcome back!",
+          description: "You've successfully signed in.",
         });
-
-        const role = user?.role || user?.user_metadata?.role;
-        if (role === 'superadmin') {
-          router.push('/superadmin/dashboard');
-        } else if (role === 'admin') {
-          router.push('/admin/dashboard');
-        } else {
-          router.push('/user/dashboard');
-        }
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred.',
-        variant: 'destructive'
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
@@ -64,36 +51,49 @@ const AuthPage = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+    
+    console.log('🚀 Starting signup process with:', {
+      email,
+      firstName,
+      lastName,
+      role
+    });
+    
     try {
       const { error } = await signUp(email, password, {
         first_name: firstName,
         last_name: lastName,
         role: role
       });
-
+      
+      console.log('📝 Signup response:', { error });
+      
       if (error) {
+        console.error('❌ Signup error:', error);
         toast({
-          title: 'Error',
+          title: "Error",
           description: error.message,
-          variant: 'destructive'
+          variant: "destructive"
         });
       } else {
+        console.log('✅ Signup successful!');
         toast({
-          title: 'Account Created!',
-          description: `${role} account created successfully. Please check your email to verify your account.`
+          title: "Account Created!",
+          description: `${role} account created successfully. Please check your email to verify your account.`,
         });
-
+        
+        // Clear form
         setEmail('');
         setPassword('');
         setFirstName('');
         setLastName('');
       }
     } catch (error) {
+      console.error('❌ Unexpected signup error:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred during signup.',
-        variant: 'destructive'
+        title: "Error",
+        description: "An unexpected error occurred during signup.",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
@@ -125,7 +125,7 @@ const AuthPage = () => {
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
-
+              
               <TabsContent value="signin" className="space-y-4">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
@@ -168,7 +168,7 @@ const AuthPage = () => {
 
                 <SocialAuth mode="signin" />
               </TabsContent>
-
+              
               <TabsContent value="signup" className="space-y-4">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="grid grid-cols-2 gap-2">
