@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, MapPin, Upload, Plus, X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar, Clock, MapPin, Upload, Plus, X, Users } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,6 +24,10 @@ const CreateEvent = () => {
     location_name: '',
     location_address: '',
     max_attendees: 10,
+    dining_style: '',
+    dietary_theme: '',
+    rsvp_deadline_date: '',
+    rsvp_deadline_time: '',
     tags: [] as string[],
     cover_photo_url: '',
     is_mystery_dinner: false
@@ -103,20 +108,27 @@ const CreateEvent = () => {
     
     try {
       const dateTime = new Date(`${formData.date}T${formData.time}`);
+      const rsvpDeadline = formData.rsvp_deadline_date && formData.rsvp_deadline_time 
+        ? new Date(`${formData.rsvp_deadline_date}T${formData.rsvp_deadline_time}`)
+        : null;
       
       const { data, error } = await supabase
         .from('events')
         .insert({
-          creator_id: profile.id,
+          creator_id: user.id,
           name: formData.name,
           description: formData.description,
           date_time: dateTime.toISOString(),
           location_name: formData.location_name,
           location_address: formData.location_address,
           max_attendees: formData.max_attendees,
+          dining_style: formData.dining_style as any || null,
+          dietary_theme: formData.dietary_theme as any || null,
+          rsvp_deadline: rsvpDeadline?.toISOString() || null,
           tags: formData.tags,
           cover_photo_url: formData.cover_photo_url || null,
-          is_mystery_dinner: formData.is_mystery_dinner
+          is_mystery_dinner: formData.is_mystery_dinner,
+          status: 'active' as any
         })
         .select()
         .single();
@@ -242,15 +254,38 @@ const CreateEvent = () => {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="max_attendees">Maximum Attendees *</Label>
+                    <Input
+                      id="max_attendees"
+                      type="number"
+                      min="2"
+                      max="50"
+                      value={formData.max_attendees}
+                      onChange={(e) => handleInputChange('max_attendees', parseInt(e.target.value))}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="rsvp_deadline_date">RSVP Deadline Date</Label>
+                    <Input
+                      id="rsvp_deadline_date"
+                      type="date"
+                      value={formData.rsvp_deadline_date}
+                      onChange={(e) => handleInputChange('rsvp_deadline_date', e.target.value)}
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="max_attendees">Maximum Attendees</Label>
+                  <Label htmlFor="rsvp_deadline_time">RSVP Deadline Time</Label>
                   <Input
-                    id="max_attendees"
-                    type="number"
-                    min="2"
-                    max="50"
-                    value={formData.max_attendees}
-                    onChange={(e) => handleInputChange('max_attendees', parseInt(e.target.value))}
+                    id="rsvp_deadline_time"
+                    type="time"
+                    value={formData.rsvp_deadline_time}
+                    onChange={(e) => handleInputChange('rsvp_deadline_time', e.target.value)}
                   />
                 </div>
               </CardContent>
@@ -312,6 +347,51 @@ const CreateEvent = () => {
                     </span>
                   </Button>
                 </label>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Users className="h-5 w-5" />
+                  <span>Event Preferences</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dining_style">Dining Style</Label>
+                    <Select value={formData.dining_style} onValueChange={(value) => handleInputChange('dining_style', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select dining style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="adventurous">Adventurous</SelectItem>
+                        <SelectItem value="foodie_enthusiast">Foodie Enthusiast</SelectItem>
+                        <SelectItem value="local_lover">Local Lover</SelectItem>
+                        <SelectItem value="comfort_food">Comfort Food</SelectItem>
+                        <SelectItem value="health_conscious">Health Conscious</SelectItem>
+                        <SelectItem value="social_butterfly">Social Butterfly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dietary_theme">Dietary Theme</Label>
+                    <Select value={formData.dietary_theme} onValueChange={(value) => handleInputChange('dietary_theme', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select dietary theme" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="omnivore">Omnivore</SelectItem>
+                        <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                        <SelectItem value="vegan">Vegan</SelectItem>
+                        <SelectItem value="gluten_free">Gluten Free</SelectItem>
+                        <SelectItem value="keto">Keto</SelectItem>
+                        <SelectItem value="paleo">Paleo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
