@@ -145,9 +145,38 @@ const CreateEvent = () => {
 
       if (error) throw error;
 
+      // Automatically add creator to RSVP table
+      const { error: rsvpError } = await supabase
+        .from('rsvps')
+        .insert({
+          event_id: data.id,
+          user_id: profile.id,
+          status: 'confirmed'
+        });
+
+      if (rsvpError) {
+        console.error('Error creating creator RSVP:', rsvpError);
+        // Don't fail the entire operation if RSVP creation fails
+      }
+
+      // Create reservation for creator
+      const { error: reservationError } = await supabase
+        .from('reservations')
+        .insert({
+          event_id: data.id,
+          user_id: profile.id,
+          reservation_type: 'standard',
+          reservation_status: 'confirmed'
+        });
+
+      if (reservationError) {
+        console.error('Error creating creator reservation:', reservationError);
+        // Don't fail the entire operation if reservation creation fails
+      }
+
       toast({
         title: "Event created!",
-        description: "Your event has been created successfully.",
+        description: "Your event has been created successfully and you're automatically attending.",
       });
 
       navigate('/events');
