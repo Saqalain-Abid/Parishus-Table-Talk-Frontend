@@ -586,6 +586,7 @@ export type Database = {
         | "crossed_paths_match"
         | "feedback_request"
         | "general"
+        | "rsvp_received"
       payment_status: "pending" | "completed" | "failed" | "refunded"
       rsvp_status: "yes" | "no" | "maybe" | "pending"
       subscription_plan: "monthly" | "yearly"
@@ -745,6 +746,7 @@ export const Constants = {
         "crossed_paths_match",
         "feedback_request",
         "general",
+        "rsvp_received",
       ],
       payment_status: ["pending", "completed", "failed", "refunded"],
       rsvp_status: ["yes", "no", "maybe", "pending"],

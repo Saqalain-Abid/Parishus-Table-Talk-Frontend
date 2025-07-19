@@ -125,7 +125,7 @@ const CreateEvent = () => {
           cover_photo_url: formData.cover_photo_url || null,
           is_mystery_dinner: formData.is_mystery_dinner,
           status: 'active'
-        })
+        } as any)
         .select()
         .single();
       if (error) throw error;
@@ -134,7 +134,7 @@ const CreateEvent = () => {
         .from('rsvps')
         .insert({
           event_id: data.id,
-          user_id: profile.id,
+          user_id: profile.user_id,
           status: 'confirmed'
         });
       if (rsvpError) {
@@ -150,7 +150,7 @@ const CreateEvent = () => {
         .from('reservations')
         .insert({
           event_id: data.id,
-          user_id: profile.id,
+          user_id: profile.user_id,
           reservation_type: 'standard',
           reservation_status: 'confirmed'
         });

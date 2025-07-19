@@ -19,7 +19,7 @@ interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'rsvp_confirmation' | 'event_reminder' | 'crossed_paths_match' | 'feedback_request' | 'general';
+  type: 'rsvp_confirmation' | 'event_reminder' | 'crossed_paths_match' | 'feedback_request' | 'general' | 'rsvp_received';
   is_read: boolean;
   created_at: string;
   data?: any;
