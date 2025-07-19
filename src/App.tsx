@@ -17,6 +17,13 @@ import Subscription from "./pages/Subscription";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminCreateEvent from "./pages/admin/AdminCreateEvent";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminRSVPs from "./pages/admin/AdminRSVPs";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminNotifications from "./pages/admin/AdminNotifications";
+import AdminReports from "./pages/admin/AdminReports";
+import AdminManagement from "./pages/admin/AdminManagement";
+import AdminSettings from "./pages/admin/AdminSettings";
 import AdminLayout from "./components/layout/AdminLayout";
 import ExploreEvents from "./pages/ExploreEvents";
 import TestAuthSystem from "./components/auth/TestAuthSystem";
@@ -127,6 +134,55 @@ const App = () => (
                   </ProtectedAdminRoute>
                 }
               />
+              <Route path="/admin/users" element={
+                <ProtectedAdminRoute>
+                  <AdminLayout>
+                    <AdminUsers />
+                  </AdminLayout>
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/rsvps" element={
+                <ProtectedAdminRoute>
+                  <AdminLayout>
+                    <AdminRSVPs />
+                  </AdminLayout>
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/analytics" element={
+                <ProtectedAdminRoute>
+                  <AdminLayout>
+                    <AdminAnalytics />
+                  </AdminLayout>
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/notifications" element={
+                <ProtectedAdminRoute>
+                  <AdminLayout>
+                    <AdminNotifications />
+                  </AdminLayout>
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/reports" element={
+                <ProtectedAdminRoute>
+                  <AdminLayout>
+                    <AdminReports />
+                  </AdminLayout>
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/admin-management" element={
+                <ProtectedAdminRoute requireSuperAdmin={true}>
+                  <AdminLayout>
+                    <AdminManagement />
+                  </AdminLayout>
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/settings" element={
+                <ProtectedAdminRoute requireSuperAdmin={true}>
+                  <AdminLayout>
+                    <AdminSettings />
+                  </AdminLayout>
+                </ProtectedAdminRoute>
+              } />
               <Route path="/test-auth" element={
                 <TestAuthSystem />
               } />
