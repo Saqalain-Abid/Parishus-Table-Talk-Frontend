@@ -143,6 +143,7 @@ const CreateEvent = () => {
           description: rsvpError.message,
           variant: 'destructive'
         });
+        return false;
       }
 
       const { error: reservationError } = await supabase
@@ -159,6 +160,7 @@ const CreateEvent = () => {
           description: reservationError.message,
           variant: 'destructive'
         });
+        return false;
       }
 
       toast({
