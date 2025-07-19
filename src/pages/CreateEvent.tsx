@@ -386,18 +386,21 @@ const CreateEvent = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="dietary_theme">Dietary Theme</Label>
+                    <Label htmlFor="dietary_theme">Dietary Preferences</Label>
                     <Select value={formData.dietary_theme} onValueChange={(value) => handleInputChange('dietary_theme', value)}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select dietary theme" />
+                        <SelectValue placeholder="Select dietary preferences" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="omnivore">Omnivore</SelectItem>
+                        <SelectItem value="no_restrictions">No Restrictions</SelectItem>
                         <SelectItem value="vegetarian">Vegetarian</SelectItem>
                         <SelectItem value="vegan">Vegan</SelectItem>
                         <SelectItem value="gluten_free">Gluten Free</SelectItem>
+                        <SelectItem value="dairy_free">Dairy Free</SelectItem>
                         <SelectItem value="keto">Keto</SelectItem>
                         <SelectItem value="paleo">Paleo</SelectItem>
+                        <SelectItem value="kosher">Kosher</SelectItem>
+                        <SelectItem value="halal">Halal</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
