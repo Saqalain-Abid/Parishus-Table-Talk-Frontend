@@ -136,8 +136,41 @@ export type Database = {
           },
         ]
       }
+      event_invitations: {
+        Row: {
+          event_id: string
+          id: string
+          invitation_status: string | null
+          invited_at: string
+          user_id: string
+        }
+        Insert: {
+          event_id: string
+          id?: string
+          invitation_status?: string | null
+          invited_at?: string
+          user_id: string
+        }
+        Update: {
+          event_id?: string
+          id?: string
+          invitation_status?: string | null
+          invited_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_invitations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
+          admin_notification_email: string | null
           cover_photo_url: string | null
           created_at: string
           creator_id: string
@@ -155,11 +188,13 @@ export type Database = {
           location_name: string | null
           max_attendees: number | null
           name: string
+          rsvp_deadline: string | null
           status: Database["public"]["Enums"]["event_status"] | null
           tags: string[] | null
           updated_at: string
         }
         Insert: {
+          admin_notification_email?: string | null
           cover_photo_url?: string | null
           created_at?: string
           creator_id: string
@@ -177,11 +212,13 @@ export type Database = {
           location_name?: string | null
           max_attendees?: number | null
           name: string
+          rsvp_deadline?: string | null
           status?: Database["public"]["Enums"]["event_status"] | null
           tags?: string[] | null
           updated_at?: string
         }
         Update: {
+          admin_notification_email?: string | null
           cover_photo_url?: string | null
           created_at?: string
           creator_id?: string
@@ -199,6 +236,7 @@ export type Database = {
           location_name?: string | null
           max_attendees?: number | null
           name?: string
+          rsvp_deadline?: string | null
           status?: Database["public"]["Enums"]["event_status"] | null
           tags?: string[] | null
           updated_at?: string
@@ -434,6 +472,7 @@ export type Database = {
           event_id: string
           id: string
           is_running_late: boolean | null
+          response_status: Database["public"]["Enums"]["rsvp_status"] | null
           status: string | null
           user_id: string
         }
@@ -442,6 +481,7 @@ export type Database = {
           event_id: string
           id?: string
           is_running_late?: boolean | null
+          response_status?: Database["public"]["Enums"]["rsvp_status"] | null
           status?: string | null
           user_id: string
         }
@@ -450,6 +490,7 @@ export type Database = {
           event_id?: string
           id?: string
           is_running_late?: boolean | null
+          response_status?: Database["public"]["Enums"]["rsvp_status"] | null
           status?: string | null
           user_id?: string
         }
@@ -508,6 +549,7 @@ export type Database = {
         | "feedback_request"
         | "general"
       payment_status: "pending" | "completed" | "failed" | "refunded"
+      rsvp_status: "yes" | "no" | "maybe" | "pending"
       subscription_plan: "monthly" | "yearly"
       user_role: "user" | "admin" | "superadmin"
     }
@@ -667,6 +709,7 @@ export const Constants = {
         "general",
       ],
       payment_status: ["pending", "completed", "failed", "refunded"],
+      rsvp_status: ["yes", "no", "maybe", "pending"],
       subscription_plan: ["monthly", "yearly"],
       user_role: ["user", "admin", "superadmin"],
     },
