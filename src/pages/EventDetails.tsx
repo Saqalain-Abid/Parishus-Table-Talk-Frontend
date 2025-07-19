@@ -401,7 +401,7 @@ const EventDetails = () => {
                   <p className="text-sm text-muted-foreground">People attending</p>
                 </div>
 
-                {!isCreator && (
+                {isUpcoming && spotsLeft > 0 && (
                   <Button
                     onClick={handleRSVP}
                     className={`w-full ${
