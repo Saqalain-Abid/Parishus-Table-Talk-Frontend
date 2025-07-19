@@ -134,7 +134,7 @@ const CreateEvent = () => {
         .from('rsvps')
         .insert({
           event_id: data.id,
-          user_id: profile.user_id,
+          user_id: profile.id,
           status: 'confirmed'
         });
       if (rsvpError) {
@@ -150,7 +150,7 @@ const CreateEvent = () => {
         .from('reservations')
         .insert({
           event_id: data.id,
-          user_id: profile.user_id,
+          user_id: profile.id,
           reservation_type: 'standard',
           reservation_status: 'confirmed'
         });
