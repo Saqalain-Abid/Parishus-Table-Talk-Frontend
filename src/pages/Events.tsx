@@ -41,6 +41,11 @@ interface Event {
     last_name?: string;
     profile_photo_url?: string;
   };
+  rsvps?: {
+    id: string;
+    status: string;
+    user_id: string;
+  }[];
   rsvp_count?: number;
   user_rsvp?: {
     id: string;
@@ -321,10 +326,12 @@ const Events = () => {
           </TableHeader>
           <TableBody>
             {events.map((event) => {
-              const hasRSVP = event.user_rsvp && event.user_rsvp.length > 0;
-              const isCreator = event.creator_id === userProfileId;
-              const spotsLeft = event.max_attendees - (event.rsvp_count || 0);
               const eventDate = new Date(event.date_time);
+              const isCreator = event.creator_id === userProfileId;
+              const rsvps = event.rsvps || [];
+              const hasRSVP = rsvps.some(rsvp => rsvp.user_id === userProfileId);
+              const confirmedRSVPs = rsvps.filter(rsvp => rsvp.status === 'confirmed');
+              const spotsLeft = event.max_attendees - confirmedRSVPs.length;
               const isUpcoming = eventDate > new Date();
 
               return (
