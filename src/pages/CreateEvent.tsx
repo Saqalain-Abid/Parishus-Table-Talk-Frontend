@@ -102,8 +102,18 @@ const CreateEvent = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !profile) return;
+    if (!user || !profile) {
+      toast({
+        title: "Error",
+        description: "Please ensure you are logged in and your profile is complete.",
+        variant: "destructive"
+      });
+      return;
+    }
 
+    console.log('User:', user.id);
+    console.log('Profile:', profile);
+    
     setLoading(true);
     
     try {
