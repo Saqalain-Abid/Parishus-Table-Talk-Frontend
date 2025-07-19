@@ -59,6 +59,8 @@ const RSVPs = () => {
     if (!user) return;
 
     try {
+      console.log('Fetching reservations for user:', user.id);
+      
       // Get user's profile ID first
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -66,7 +68,12 @@ const RSVPs = () => {
         .eq('user_id', user.id)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        throw profileError;
+      }
+
+      console.log('Found profile ID:', profile.id);
 
       const { data, error } = await supabase
         .from('reservations')
@@ -91,8 +98,12 @@ const RSVPs = () => {
         .eq('user_id', profile.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Reservations query error:', error);
+        throw error;
+      }
 
+      console.log('Found reservations:', data);
       setReservations(data || []);
     } catch (error) {
       console.error('Error fetching reservations:', error);

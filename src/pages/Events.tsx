@@ -129,6 +129,8 @@ const Events = () => {
     if (!user || !userProfileId) return;
 
     try {
+      console.log('Fetching my events for user:', user.id, 'profile:', userProfileId);
+      
       // Fetch events created by user
       const { data: createdEvents, error: createdError } = await supabase
         .from('events')
@@ -148,7 +150,12 @@ const Events = () => {
         .eq('creator_id', userProfileId)
         .order('date_time', { ascending: true });
 
-      if (createdError) throw createdError;
+      if (createdError) {
+        console.error('Created events error:', createdError);
+        throw createdError;
+      }
+
+      console.log('Created events:', createdEvents);
 
       // Fetch events user has RSVP'd to
       const { data: rsvpEvents, error: rsvpError } = await supabase
@@ -169,13 +176,20 @@ const Events = () => {
         .eq('rsvps.user_id', userProfileId)
         .order('date_time', { ascending: true });
 
-      if (rsvpError) throw rsvpError;
+      if (rsvpError) {
+        console.error('RSVP events error:', rsvpError);
+        throw rsvpError;
+      }
+
+      console.log('RSVP events:', rsvpEvents);
 
       // Combine and deduplicate events
       const allEvents = [...(createdEvents || []), ...(rsvpEvents || [])];
       const uniqueEvents = allEvents.filter((event, index, self) => 
         index === self.findIndex(e => e.id === event.id)
       );
+
+      console.log('All unique events:', uniqueEvents);
 
       const eventsWithCounts = uniqueEvents.map(event => ({
         ...event,

@@ -150,9 +150,7 @@ const App = () => (
                 path="/admin/events/create"
                 element={
                   <ProtectedAdminRoute>
-                    <AdminLayout>
-                      <AdminCreateEvent />
-                    </AdminLayout>
+                    <AdminCreateEvent />
                   </ProtectedAdminRoute>
                 }
               />

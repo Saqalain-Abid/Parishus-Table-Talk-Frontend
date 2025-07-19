@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar, Clock, MapPin, Upload, Plus, X, Users, ArrowLeft, Save } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import AdminLayout from '@/components/layout/AdminLayout';
 
 const AdminCreateEvent = () => {
   const [loading, setLoading] = useState(false);
@@ -194,313 +195,315 @@ const AdminCreateEvent = () => {
                       formData.time && formData.location_name;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="space-y-8">
-        {/* Header */}
-        <div className="flex items-center space-x-4">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate('/admin/events')}
-            className="flex items-center space-x-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Events</span>
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Create New Event</h1>
-            <p className="text-muted-foreground mt-1">
-              Plan your next dining experience and invite others to join
-            </p>
+    <AdminLayout>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-8">
+          {/* Header */}
+          <div className="flex items-center space-x-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate('/admin/events')}
+              className="flex items-center space-x-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Events</span>
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Create New Event</h1>
+              <p className="text-muted-foreground mt-1">
+                Plan your next dining experience and invite others to join
+              </p>
+            </div>
           </div>
-        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <Card className="shadow-card border-border">
-            <CardHeader>
-              <CardTitle>Event Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">Event Name *</Label>
-                <Input
-                  id="name"
-                  placeholder="e.g., Wine Tasting Social"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description *</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe your event, what to expect, dress code, etc."
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  rows={4}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <Card className="shadow-card border-border">
+              <CardHeader>
+                <CardTitle>Event Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="date">Date *</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="date"
-                      type="date"
-                      value={formData.date}
-                      onChange={(e) => handleInputChange('date', e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="time">Time *</Label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="time"
-                      type="time"
-                      value={formData.time}
-                      onChange={(e) => handleInputChange('time', e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="location_name">Venue Name *</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="location_name"
-                      placeholder="e.g., The Garden Cafe"
-                      value={formData.location_name}
-                      onChange={(e) => handleInputChange('location_name', e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="location_address">Address</Label>
+                  <Label htmlFor="name">Event Name *</Label>
                   <Input
-                    id="location_address"
-                    placeholder="123 Main St, City, State"
-                    value={formData.location_address}
-                    onChange={(e) => handleInputChange('location_address', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="max_attendees">Maximum Attendees *</Label>
-                  <Input
-                    id="max_attendees"
-                    type="number"
-                    min="2"
-                    max="50"
-                    value={formData.max_attendees}
-                    onChange={(e) => handleInputChange('max_attendees', parseInt(e.target.value))}
+                    id="name"
+                    placeholder="e.g., Wine Tasting Social"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
                     required
                   />
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label htmlFor="rsvp_deadline_date">RSVP Deadline Date</Label>
-                  <Input
-                    id="rsvp_deadline_date"
-                    type="date"
-                    value={formData.rsvp_deadline_date}
-                    onChange={(e) => handleInputChange('rsvp_deadline_date', e.target.value)}
+                  <Label htmlFor="description">Description *</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe your event, what to expect, dress code, etc."
+                    value={formData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
+                    rows={4}
+                    required
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="rsvp_deadline_time">RSVP Deadline Time</Label>
-                <Input
-                  id="rsvp_deadline_time"
-                  type="time"
-                  value={formData.rsvp_deadline_time}
-                  onChange={(e) => handleInputChange('rsvp_deadline_time', e.target.value)}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="date">Date *</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="date"
+                        type="date"
+                        value={formData.date}
+                        onChange={(e) => handleInputChange('date', e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
 
-          <Card className="shadow-card border-border">
-            <CardHeader>
-              <CardTitle>Event Photo</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formData.cover_photo_url && (
-                <div className="relative">
-                  <img
-                    src={formData.cover_photo_url}
-                    alt="Event cover"
-                    className="w-full h-48 object-cover rounded-lg"
+                  <div className="space-y-2">
+                    <Label htmlFor="time">Time *</Label>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="time"
+                        type="time"
+                        value={formData.time}
+                        onChange={(e) => handleInputChange('time', e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="location_name">Venue Name *</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="location_name"
+                        placeholder="e.g., The Garden Cafe"
+                        value={formData.location_name}
+                        onChange={(e) => handleInputChange('location_name', e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="location_address">Address</Label>
+                    <Input
+                      id="location_address"
+                      placeholder="123 Main St, City, State"
+                      value={formData.location_address}
+                      onChange={(e) => handleInputChange('location_address', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="max_attendees">Maximum Attendees *</Label>
+                    <Input
+                      id="max_attendees"
+                      type="number"
+                      min="2"
+                      max="50"
+                      value={formData.max_attendees}
+                      onChange={(e) => handleInputChange('max_attendees', parseInt(e.target.value))}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="rsvp_deadline_date">RSVP Deadline Date</Label>
+                    <Input
+                      id="rsvp_deadline_date"
+                      type="date"
+                      value={formData.rsvp_deadline_date}
+                      onChange={(e) => handleInputChange('rsvp_deadline_date', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="rsvp_deadline_time">RSVP Deadline Time</Label>
+                  <Input
+                    id="rsvp_deadline_time"
+                    type="time"
+                    value={formData.rsvp_deadline_time}
+                    onChange={(e) => handleInputChange('rsvp_deadline_time', e.target.value)}
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-card border-border">
+              <CardHeader>
+                <CardTitle>Event Photo</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {formData.cover_photo_url && (
+                  <div className="relative">
+                    <img
+                      src={formData.cover_photo_url}
+                      alt="Event cover"
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => handleInputChange('cover_photo_url', '')}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+                
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="photo-upload"
+                  disabled={uploading}
+                />
+                
+                <label htmlFor="photo-upload">
                   <Button
                     type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => handleInputChange('cover_photo_url', '')}
+                    variant="outline"
+                    disabled={uploading}
+                    className="w-full cursor-pointer"
+                    asChild
                   >
-                    <X className="h-4 w-4" />
+                    <span>
+                      {uploading ? (
+                        <>
+                          <Upload className="h-4 w-4 mr-2 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 mr-2" />
+                          {formData.cover_photo_url ? 'Change Photo' : 'Upload Cover Photo'}
+                        </>
+                      )}
+                    </span>
+                  </Button>
+                </label>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Users className="h-5 w-5" />
+                  <span>Event Preferences</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dining_style">Dining Style</Label>
+                    <Select value={formData.dining_style} onValueChange={(value) => handleInputChange('dining_style', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select dining style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="adventurous">Adventurous</SelectItem>
+                        <SelectItem value="foodie_enthusiast">Foodie Enthusiast</SelectItem>
+                        <SelectItem value="local_lover">Local Lover</SelectItem>
+                        <SelectItem value="comfort_food">Comfort Food</SelectItem>
+                        <SelectItem value="health_conscious">Health Conscious</SelectItem>
+                        <SelectItem value="social_butterfly">Social Butterfly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dietary_theme">Dietary Preferences</Label>
+                    <Select value={formData.dietary_theme} onValueChange={(value) => handleInputChange('dietary_theme', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select dietary preferences" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="no_restrictions">No Restrictions</SelectItem>
+                        <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                        <SelectItem value="vegan">Vegan</SelectItem>
+                        <SelectItem value="gluten_free">Gluten Free</SelectItem>
+                        <SelectItem value="dairy_free">Dairy Free</SelectItem>
+                        <SelectItem value="keto">Keto</SelectItem>
+                        <SelectItem value="paleo">Paleo</SelectItem>
+                        <SelectItem value="kosher">Kosher</SelectItem>
+                        <SelectItem value="halal">Halal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-card border-border">
+              <CardHeader>
+                <CardTitle>Tags</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder="Add a tag (e.g., wine, vegan, casual)"
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  />
+                  <Button type="button" onClick={addTag} variant="outline">
+                    <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-              )}
-              
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                id="photo-upload"
-                disabled={uploading}
-              />
-              
-              <label htmlFor="photo-upload">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={uploading}
-                  className="w-full cursor-pointer"
-                  asChild
-                >
-                  <span>
-                    {uploading ? (
-                      <>
-                        <Upload className="h-4 w-4 mr-2 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4 mr-2" />
-                        {formData.cover_photo_url ? 'Change Photo' : 'Upload Cover Photo'}
-                      </>
-                    )}
-                  </span>
-                </Button>
-              </label>
-            </CardContent>
-          </Card>
+                
+                {formData.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.tags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="cursor-pointer hover:bg-destructive/20"
+                        onClick={() => removeTag(tag)}
+                      >
+                        {tag}
+                        <X className="h-3 w-3 ml-1" />
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-          <Card className="shadow-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Users className="h-5 w-5" />
-                <span>Event Preferences</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dining_style">Dining Style</Label>
-                  <Select value={formData.dining_style} onValueChange={(value) => handleInputChange('dining_style', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select dining style" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="adventurous">Adventurous</SelectItem>
-                      <SelectItem value="foodie_enthusiast">Foodie Enthusiast</SelectItem>
-                      <SelectItem value="local_lover">Local Lover</SelectItem>
-                      <SelectItem value="comfort_food">Comfort Food</SelectItem>
-                      <SelectItem value="health_conscious">Health Conscious</SelectItem>
-                      <SelectItem value="social_butterfly">Social Butterfly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dietary_theme">Dietary Preferences</Label>
-                  <Select value={formData.dietary_theme} onValueChange={(value) => handleInputChange('dietary_theme', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select dietary preferences" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="no_restrictions">No Restrictions</SelectItem>
-                      <SelectItem value="vegetarian">Vegetarian</SelectItem>
-                      <SelectItem value="vegan">Vegan</SelectItem>
-                      <SelectItem value="gluten_free">Gluten Free</SelectItem>
-                      <SelectItem value="dairy_free">Dairy Free</SelectItem>
-                      <SelectItem value="keto">Keto</SelectItem>
-                      <SelectItem value="paleo">Paleo</SelectItem>
-                      <SelectItem value="kosher">Kosher</SelectItem>
-                      <SelectItem value="halal">Halal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card border-border">
-            <CardHeader>
-              <CardTitle>Tags</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex space-x-2">
-                <Input
-                  placeholder="Add a tag (e.g., wine, vegan, casual)"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                />
-                <Button type="button" onClick={addTag} variant="outline">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              {formData.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {formData.tags.map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="secondary"
-                      className="cursor-pointer hover:bg-destructive/20"
-                      onClick={() => removeTag(tag)}
-                    >
-                      {tag}
-                      <X className="h-3 w-3 ml-1" />
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end space-x-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => navigate('/admin/events')}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={loading || !isFormValid}
-              className="flex items-center space-x-2"
-            >
-              <Save className="h-4 w-4" />
-              <span>{loading ? 'Creating...' : 'Create Event'}</span>
-            </Button>
-          </div>
-        </form>
+            <div className="flex justify-end space-x-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => navigate('/admin/events')}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={loading || !isFormValid}
+                className="flex items-center space-x-2"
+              >
+                <Save className="h-4 w-4" />
+                <span>{loading ? 'Creating...' : 'Create Event'}</span>
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
