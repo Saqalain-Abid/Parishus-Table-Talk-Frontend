@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Calendar, MapPin, Users, MoreHorizontal, Eye, Trash2 } from 'lucide-react';
+import { Calendar, MapPin, Users, MoreHorizontal, Eye, Trash2, Plus } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +37,8 @@ interface Event {
 }
 
 const AdminEvents = () => {
+  const navigate = useNavigate();
+  const { profile } = useProfile();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -129,6 +134,13 @@ const AdminEvents = () => {
             <h1 className="text-3xl font-bold">Event Management</h1>
             <p className="text-muted-foreground">Manage all events in the system</p>
           </div>
+          <Button 
+            onClick={() => navigate('/admin/events/create')}
+            className="flex items-center space-x-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create Event</span>
+          </Button>
         </div>
 
         <div className="grid gap-6">

@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import Subscription from "./pages/Subscription";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminEvents from "./pages/admin/AdminEvents";
+import AdminCreateEvent from "./pages/admin/AdminCreateEvent";
 import ExploreEvents from "./pages/ExploreEvents";
 import TestAuthSystem from "./components/auth/TestAuthSystem";
 import RoleDebugger from "./components/auth/RoleDebugger";
@@ -109,6 +110,14 @@ const App = () => (
                   <AdminDashboard />
                 </ProtectedAdminRoute>
               } />
+              <Route
+                path="/admin/events/create"
+                element={
+                  <ProtectedAdminRoute>
+                    <AdminCreateEvent />
+                  </ProtectedAdminRoute>
+                }
+              />
               <Route path="/test-auth" element={
                 <TestAuthSystem />
               } />
