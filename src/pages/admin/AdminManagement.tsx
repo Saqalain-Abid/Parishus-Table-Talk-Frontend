@@ -26,7 +26,7 @@ interface CreateAdminForm {
   email: string;
   first_name: string;
   last_name: string;
-  role: 'admin' | 'superadmin';
+  role: 'admin'; // Restrict to admin only
 }
 
 const AdminManagement = () => {
@@ -80,7 +80,7 @@ const AdminManagement = () => {
           email: data.email,
           first_name: data.first_name,
           last_name: data.last_name,
-          role: data.role === 'superadmin' ? 'super_admin' : 'moderator',
+          role: 'moderator', // Always create as moderator (admin role)
           password_hash: 'to_be_set', // This would be handled by auth system
           is_active: true
         }]);
@@ -265,7 +265,6 @@ const AdminManagement = () => {
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="superadmin">Super Admin</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

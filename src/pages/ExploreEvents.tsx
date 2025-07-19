@@ -386,14 +386,16 @@ const ExploreEvents = () => {
                 />
               </div>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/create-event')}
-              className="gap-2"
-            >
-              <Calendar className="w-4 h-4" />
-              Create Event
-            </Button>
+            {user && (
+              <Button
+                variant="outline"
+                onClick={() => navigate('/create-event')}
+                className="gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                Create Event
+              </Button>
+            )}
           </div>
 
           <div className="flex gap-4 flex-wrap">
@@ -450,10 +452,12 @@ const ExploreEvents = () => {
                 : "No events are available at the moment"
               }
             </p>
-            <Button onClick={() => navigate('/create-event')} className="gap-2">
-              <Calendar className="w-4 h-4" />
-              Create the first event
-            </Button>
+            {user && (
+              <Button onClick={() => navigate('/create-event')} className="gap-2">
+                <Calendar className="w-4 h-4" />
+                Create the first event
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
