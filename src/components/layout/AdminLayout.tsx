@@ -70,8 +70,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-auto bg-gradient-to-b from-background/50 to-muted/10 p-8">
-            <div className="max-w-7xl mx-auto">
+          <main className="flex-1 overflow-auto bg-gradient-to-b from-background/50 to-muted/10 p-4 sm:p-6 lg:p-8">
+            <div className="w-full max-w-full mx-auto">
               {children}
             </div>
           </main>

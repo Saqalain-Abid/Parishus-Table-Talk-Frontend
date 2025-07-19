@@ -268,11 +268,12 @@ const AdminCreateEvent = () => {
                       <SelectValue placeholder="Select dining style" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="fine_dining">Fine Dining</SelectItem>
-                      <SelectItem value="casual">Casual</SelectItem>
-                      <SelectItem value="fast_casual">Fast Casual</SelectItem>
-                      <SelectItem value="buffet">Buffet</SelectItem>
-                      <SelectItem value="family_style">Family Style</SelectItem>
+                      <SelectItem value="adventurous">Adventurous</SelectItem>
+                      <SelectItem value="foodie_enthusiast">Foodie Enthusiast</SelectItem>
+                      <SelectItem value="local_lover">Local Lover</SelectItem>
+                      <SelectItem value="comfort_food">Comfort Food</SelectItem>
+                      <SelectItem value="health_conscious">Health Conscious</SelectItem>
+                      <SelectItem value="social_butterfly">Social Butterfly</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
