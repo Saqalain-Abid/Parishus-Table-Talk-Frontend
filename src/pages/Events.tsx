@@ -86,7 +86,7 @@ const Events = () => {
         .from('events')
         .select(`
           *,
-          profiles!events_creator_id_fkey (
+          profiles:creator_id (
             first_name,
             last_name,
             profile_photo_url
@@ -129,7 +129,7 @@ const Events = () => {
         .from('events')
         .select(`
           *,
-          profiles!events_creator_id_fkey (
+          profiles:creator_id (
             first_name,
             last_name,
             profile_photo_url
@@ -150,7 +150,7 @@ const Events = () => {
         .from('events')
         .select(`
           *,
-          profiles!events_creator_id_fkey (
+          profiles:creator_id (
             first_name,
             last_name,
             profile_photo_url
