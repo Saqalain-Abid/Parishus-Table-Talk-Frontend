@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -284,181 +285,195 @@ const Events = () => {
     event.location_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const EventCard = ({ event, showActions = false }: { event: Event; showActions?: boolean }) => {
-    const hasRSVP = event.user_rsvp && event.user_rsvp.length > 0;
-    const isCreator = event.creator_id === userProfileId;
-    const spotsLeft = event.max_attendees - (event.rsvp_count || 0);
+  const EventTable = ({ events, showActions = false }: { events: Event[]; showActions?: boolean }) => {
+    if (events.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No events found</h3>
+          <p className="text-muted-foreground mb-4">
+            {showActions ? "You haven't created or joined any events yet" : "No events available at the moment"}
+          </p>
+          <Button 
+            onClick={() => navigate('/create-event')}
+            className="bg-peach-gold hover:bg-peach-gold/90"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {showActions ? "Create Your First Event" : "Create Event"}
+          </Button>
+        </div>
+      );
+    }
 
     return (
-      <Card className="shadow-card border-border hover:shadow-glow transition-shadow">
-        {event.cover_photo_url && (
-          <div className="relative h-48 overflow-hidden rounded-t-lg">
-            <img
-              src={event.cover_photo_url}
-              alt={event.name}
-              className="w-full h-full object-cover"
-            />
-            {event.is_mystery_dinner && (
-              <Badge className="absolute top-2 left-2 bg-mystery-purple">
-                Mystery Dinner
-              </Badge>
-            )}
-          </div>
-        )}
-        
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <CardTitle className="text-lg">{event.name}</CardTitle>
-            {showActions && isCreator && (
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm">
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => deleteEvent(event.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardHeader>
-        
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground text-sm line-clamp-3">
-            {event.description}
-          </p>
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Event</TableHead>
+              <TableHead>Date & Time</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Host</TableHead>
+              <TableHead>Attendees</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {events.map((event) => {
+              const hasRSVP = event.user_rsvp && event.user_rsvp.length > 0;
+              const isCreator = event.creator_id === userProfileId;
+              const spotsLeft = event.max_attendees - (event.rsvp_count || 0);
+              const eventDate = new Date(event.date_time);
+              const isUpcoming = eventDate > new Date();
 
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span>{new Date(event.date_time).toLocaleDateString()}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>{new Date(event.date_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span>{event.location_name}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span>{event.rsvp_count}/{event.max_attendees} attending</span>
-              {spotsLeft > 0 && spotsLeft <= 3 && (
-                <Badge variant="outline" className="text-xs">
-                  {spotsLeft} spots left
-                </Badge>
-              )}
-            </div>
-          </div>
+              return (
+                <TableRow key={event.id}>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="font-medium">{event.name}</div>
+                      <div className="text-sm text-muted-foreground line-clamp-2">
+                        {event.description}
+                      </div>
+                      {event.tags && event.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {event.tags.slice(0, 2).map((tag) => (
+                            <Badge key={tag} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                          {event.tags.length > 2 && (
+                            <Badge variant="secondary" className="text-xs">
+                              +{event.tags.length - 2}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-sm">{eventDate.toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-sm">{eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-sm">{event.location_name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={event.profiles?.profile_photo_url} />
+                        <AvatarFallback className="text-xs">
+                          {event.profiles?.first_name?.[0] || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm">
+                        {event.profiles?.first_name} {event.profiles?.last_name}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <Users className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-sm">{event.rsvp_count}/{event.max_attendees}</span>
+                      </div>
+                      {spotsLeft > 0 && spotsLeft <= 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          {spotsLeft} spots left
+                        </Badge>
+                      )}
+                      {spotsLeft === 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          Full
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <Badge variant={isUpcoming ? "default" : "secondary"}>
+                        {isUpcoming ? 'Upcoming' : 'Past'}
+                      </Badge>
+                      {isCreator && (
+                        <Badge variant="outline" className="text-xs">
+                          Creator
+                        </Badge>
+                      )}
+                      {hasRSVP && !isCreator && (
+                        <Badge variant="default" className="text-xs bg-sage-green">
+                          Going
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex space-x-1">
+                      {/* Details Button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/event/${event.id}/details`)}
+                      >
+                        <Eye className="h-3 w-3" />
+                      </Button>
 
-          {event.tags && event.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {event.tags.slice(0, 3).map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-              {event.tags.length > 3 && (
-                <Badge variant="secondary" className="text-xs">
-                  +{event.tags.length - 3}
-                </Badge>
-              )}
-            </div>
-          )}
+                      {/* Edit Button (only for creators) */}
+                      {isCreator && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/event/${event.id}/edit`)}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                      )}
 
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center space-x-2">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={event.profiles?.profile_photo_url} />
-                <AvatarFallback className="text-xs">
-                  {event.profiles?.first_name?.[0] || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-muted-foreground">
-                {event.profiles?.first_name} {event.profiles?.last_name}
-              </span>
-            </div>
-          </div>
+                      {/* RSVP Button (only for non-creators) */}
+                      {!isCreator && spotsLeft > 0 && (
+                        <Button
+                          onClick={() => handleRSVP(event.id)}
+                          variant={hasRSVP ? "default" : "outline"}
+                          size="sm"
+                          className={hasRSVP ? "bg-sage-green hover:bg-sage-green/90" : ""}
+                        >
+                          {hasRSVP ? (
+                            <UserCheck className="h-3 w-3" />
+                          ) : (
+                            <Heart className="h-3 w-3" />
+                          )}
+                        </Button>
+                      )}
 
-          {/* Action Buttons */}
-          <div className="flex gap-2 mt-4">
-            {/* Details Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/event/${event.id}/details`)}
-              className="flex-1"
-            >
-              <Eye className="h-4 w-4 mr-1" />
-              Details
-            </Button>
-
-            {/* Edit Button (only for creators) */}
-            {isCreator && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate(`/event/${event.id}/edit`)}
-                className="flex-1"
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
-            )}
-
-            {/* RSVP Button (only for non-creators) */}
-            {!isCreator && spotsLeft > 0 && (
-              <Button
-                onClick={() => handleRSVP(event.id)}
-                variant={hasRSVP ? "default" : "outline"}
-                size="sm"
-                className={`flex-1 ${hasRSVP ? "bg-sage-green hover:bg-sage-green/90" : ""}`}
-              >
-                {hasRSVP ? (
-                  <>
-                    <UserCheck className="h-4 w-4 mr-1" />
-                    Going
-                  </>
-                ) : (
-                  <>
-                    <Heart className="h-4 w-4 mr-1" />
-                    RSVP
-                  </>
-                )}
-              </Button>
-            )}
-
-            {/* Delete Button (only for creators and only in My Events) */}
-            {showActions && isCreator && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => deleteEvent(event.id)}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-
-            {/* Status Badges */}
-            {isCreator && (
-              <Badge variant="outline" className="px-2 py-1">
-                Creator
-              </Badge>
-            )}
-            
-            {spotsLeft === 0 && !isCreator && (
-              <Badge variant="secondary" className="px-2 py-1">
-                Full
-              </Badge>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                      {/* Delete Button (only for creators in My Events) */}
+                      {showActions && isCreator && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => deleteEvent(event.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
     );
   };
 
@@ -510,38 +525,15 @@ const Events = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredEvents.map((event) => (
-                  <EventCard key={event.id} event={event} />
-                ))}
+              <div className="space-y-6">
+                <EventTable events={filteredEvents} />
               </div>
-
-              {filteredEvents.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">No events found</p>
-                </div>
-              )}
             </TabsContent>
             
             <TabsContent value="my-events" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {myEvents.map((event) => (
-                  <EventCard key={event.id} event={event} showActions />
-                ))}
+              <div className="space-y-6">
+                <EventTable events={myEvents} showActions />
               </div>
-
-              {myEvents.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">You haven't created or joined any events yet</p>
-                  <Button 
-                    onClick={() => navigate('/create-event')}
-                    className="bg-peach-gold hover:bg-peach-gold/90 mt-4"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Your First Event
-                  </Button>
-                </div>
-              )}
             </TabsContent>
           </Tabs>
         </div>

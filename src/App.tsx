@@ -33,6 +33,8 @@ import UserDashboard from "./pages/UserDashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import NotFound from "./pages/NotFound";
 import RSVPs from "./pages/RSVPs";
+import EventDetails from "./pages/EventDetails";
+import EventEdit from "./pages/EventEdit";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +76,18 @@ const App = () => (
                 <ProtectedRoute>
                   <Navigation />
                   <RSVPs />
+                </ProtectedRoute>
+              } />
+              <Route path="/event/:eventId/details" element={
+                <>
+                  <Navigation />
+                  <EventDetails />
+                </>
+              } />
+              <Route path="/event/:eventId/edit" element={
+                <ProtectedRoute>
+                  <Navigation />
+                  <EventEdit />
                 </ProtectedRoute>
               } />
               <Route path="/crossed-paths" element={
