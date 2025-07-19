@@ -41,12 +41,12 @@ interface Event {
     profile_photo_url: string;
     email: string;
   };
-  rsvps: Array<{
+  rsvps?: Array<{
     id: string;
     user_id: string;
     status: string;
     created_at: string;
-    profiles: {
+    profiles?: {
       first_name: string;
       last_name: string;
       profile_photo_url: string;
@@ -89,7 +89,7 @@ const EventDetails = () => {
         .from('events')
         .select(`
           *,
-          profiles!events_creator_id_fkey (
+          profiles:creator_id (
             first_name,
             last_name,
             profile_photo_url,
@@ -100,7 +100,7 @@ const EventDetails = () => {
             user_id,
             status,
             created_at,
-            profiles!rsvps_user_id_fkey (
+            profiles:user_id (
               first_name,
               last_name,
               profile_photo_url
@@ -127,7 +127,7 @@ const EventDetails = () => {
   const handleRSVP = async () => {
     if (!user || !userProfileId || !event) return;
 
-    const hasRSVP = event.rsvps.some(rsvp => rsvp.user_id === userProfileId);
+    const hasRSVP = (event.rsvps || []).some(rsvp => rsvp.user_id === userProfileId);
     const confirmed = window.confirm(
       hasRSVP 
         ? "Are you sure you want to cancel your RSVP?"
@@ -152,7 +152,7 @@ const EventDetails = () => {
           .from('reservations')
           .delete()
           .eq('event_id', eventId)
-          .eq('user_id', user.id);
+          .eq('user_id', userProfileId);
 
         if (reservationError) console.log('No reservation found');
 
@@ -177,7 +177,7 @@ const EventDetails = () => {
           .from('reservations')
           .insert({
             event_id: eventId,
-            user_id: user.id,
+            user_id: userProfileId,
             reservation_type: 'standard',
             reservation_status: 'pending'
           });
@@ -246,8 +246,9 @@ const EventDetails = () => {
 
   const eventDate = new Date(event.date_time);
   const isCreator = event.creator_id === userProfileId;
-  const hasRSVP = event.rsvps.some(rsvp => rsvp.user_id === userProfileId);
-  const confirmedRSVPs = event.rsvps.filter(rsvp => rsvp.status === 'confirmed');
+  const rsvps = event.rsvps || [];
+  const hasRSVP = rsvps.some(rsvp => rsvp.user_id === userProfileId);
+  const confirmedRSVPs = rsvps.filter(rsvp => rsvp.status === 'confirmed');
   const spotsLeft = event.max_attendees - confirmedRSVPs.length;
   const isUpcoming = eventDate > new Date();
 
@@ -460,13 +461,13 @@ const EventDetails = () => {
                     {confirmedRSVPs.slice(0, 5).map((rsvp) => (
                       <div key={rsvp.id} className="flex items-center space-x-3">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={rsvp.profiles.profile_photo_url} />
+                          <AvatarImage src={rsvp.profiles?.profile_photo_url} />
                           <AvatarFallback>
-                            {rsvp.profiles.first_name[0]}{rsvp.profiles.last_name[0]}
+                            {rsvp.profiles?.first_name?.[0] || 'U'}{rsvp.profiles?.last_name?.[0] || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-sm">
-                          {rsvp.profiles.first_name} {rsvp.profiles.last_name}
+                          {rsvp.profiles?.first_name || 'Unknown'} {rsvp.profiles?.last_name || 'User'}
                         </span>
                       </div>
                     ))}

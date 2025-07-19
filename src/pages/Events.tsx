@@ -234,7 +234,7 @@ const Events = () => {
           .from('reservations')
           .insert({
             event_id: eventId,
-            user_id: user.id,
+            user_id: userProfileId,
             reservation_type: 'standard',
             reservation_status: 'pending'
           });
