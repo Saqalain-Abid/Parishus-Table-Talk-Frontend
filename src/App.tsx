@@ -17,6 +17,7 @@ import Subscription from "./pages/Subscription";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminCreateEvent from "./pages/admin/AdminCreateEvent";
+import AdminLayout from "./components/layout/AdminLayout";
 import ExploreEvents from "./pages/ExploreEvents";
 import TestAuthSystem from "./components/auth/TestAuthSystem";
 import RoleDebugger from "./components/auth/RoleDebugger";
@@ -97,24 +98,32 @@ const App = () => (
               } />
               <Route path="/admin/dashboard" element={
                 <ProtectedAdminRoute requireSuperAdmin={false}>
-                  <AdminDashboard />
+                  <AdminLayout>
+                    <AdminDashboard />
+                  </AdminLayout>
                 </ProtectedAdminRoute>
               } />
               <Route path="/admin/events" element={
                 <ProtectedAdminRoute>
-                  <AdminEvents />
+                  <AdminLayout>
+                    <AdminEvents />
+                  </AdminLayout>
                 </ProtectedAdminRoute>
               } />
               <Route path="/admin" element={
                 <ProtectedAdminRoute>
-                  <AdminDashboard />
+                  <AdminLayout>
+                    <AdminDashboard />
+                  </AdminLayout>
                 </ProtectedAdminRoute>
               } />
               <Route
                 path="/admin/events/create"
                 element={
                   <ProtectedAdminRoute>
-                    <AdminCreateEvent />
+                    <AdminLayout>
+                      <AdminCreateEvent />
+                    </AdminLayout>
                   </ProtectedAdminRoute>
                 }
               />

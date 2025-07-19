@@ -349,31 +349,8 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-card">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
-              <Badge variant="outline" className="flex items-center space-x-1">
-                {profile.role === 'superadmin' ? <Crown className="h-3 w-3" /> : <Shield className="h-3 w-3" />}
-                <span>{profile.role === 'superadmin' ? 'Super Admin' : 'Admin'}</span>
-              </Badge>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button onClick={() => fetchDashboardData()} variant="outline" size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-              <Button onClick={() => signOut()} variant="outline">Sign Out</Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-6 py-6 space-y-6">
-        {/* Stats Cards */}
+    <div className="space-y-6">
+      {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -782,9 +759,8 @@ const AdminDashboard = () => {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
 
-      {/* User Details Modal */}
+        {/* User Details Modal */}
       <Dialog open={showUserDetails} onOpenChange={setShowUserDetails}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
