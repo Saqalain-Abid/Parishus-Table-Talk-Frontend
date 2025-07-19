@@ -134,26 +134,53 @@ const ExploreEvents = () => {
   };
 
   const handleRSVP = async (eventId: string) => {
-    if (!user || !userProfileId) return;
+    if (!user || !userProfileId) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to RSVP to events",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const event = events.find(e => e.id === eventId);
+    const hasRSVP = event?.user_rsvp && event.user_rsvp.length > 0;
+
+    const confirmed = window.confirm(
+      hasRSVP 
+        ? "Are you sure you want to cancel your RSVP for this event?"
+        : "Are you sure you want to RSVP to this event?"
+    );
+
+    if (!confirmed) return;
 
     try {
-      const event = events.find(e => e.id === eventId);
-      const hasRSVP = event?.user_rsvp && event.user_rsvp.length > 0;
-
       if (hasRSVP) {
-        const { error } = await supabase
+        // Cancel existing RSVP
+        const { error: rsvpError } = await supabase
           .from('rsvps')
           .delete()
           .eq('event_id', eventId)
           .eq('user_id', userProfileId);
 
-        if (error) throw error;
+        if (rsvpError) throw rsvpError;
+
+        // Also remove from reservations table
+        const { error: reservationError } = await supabase
+          .from('reservations')
+          .delete()
+          .eq('event_id', eventId)
+          .eq('user_id', user.id);
+
+        if (reservationError) console.log('No reservation found to delete');
+
         toast({
           title: "RSVP Cancelled",
           description: "You have cancelled your RSVP for this event.",
         });
       } else {
-        const { error } = await supabase
+        // Create new RSVP
+        const { error: rsvpError } = await supabase
           .from('rsvps')
           .insert({
             event_id: eventId,
@@ -161,10 +188,23 @@ const ExploreEvents = () => {
             status: 'confirmed'
           });
 
-        if (error) throw error;
+        if (rsvpError) throw rsvpError;
+
+        // Create reservation entry
+        const { error: reservationError } = await supabase
+          .from('reservations')
+          .insert({
+            event_id: eventId,
+            user_id: user.id,
+            reservation_type: 'standard',
+            reservation_status: 'pending'
+          });
+
+        if (reservationError) throw reservationError;
+
         toast({
           title: "RSVP Confirmed",
-          description: "You have successfully RSVP'd to this event!",
+          description: "You have successfully RSVP'd to this event! Your reservation is pending confirmation.",
         });
       }
 
@@ -280,13 +320,20 @@ const ExploreEvents = () => {
           )}
 
           <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => navigate(`/event/${event.id}/details`)}
+            >
+              Details
+            </Button>
             {!isCreator && isUpcoming && spotsLeft > 0 && (
               <Button
                 onClick={() => handleRSVP(event.id)}
                 variant={hasRSVP ? "outline" : "default"}
                 className="flex-1"
               >
-                {hasRSVP ? 'Cancel RSVP' : 'Join Event'}
+                {hasRSVP ? 'Cancel RSVP' : 'RSVP'}
               </Button>
             )}
             {isCreator && (

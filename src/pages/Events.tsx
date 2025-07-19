@@ -119,12 +119,11 @@ const Events = () => {
   };
 
   const fetchMyEvents = async () => {
-    if (!user) return;
+    if (!user || !userProfileId) return;
 
     try {
-      if (!userProfileId) return;
-
-      const { data, error } = await supabase
+      // Fetch events created by user
+      const { data: createdEvents, error: createdError } = await supabase
         .from('events')
         .select(`
           *,
@@ -139,16 +138,43 @@ const Events = () => {
             user_id
           )
         `)
-        .or(`creator_id.eq.${userProfileId},rsvps.user_id.eq.${userProfileId}`)
+        .eq('creator_id', userProfileId)
         .order('date_time', { ascending: true });
 
-      if (error) throw error;
+      if (createdError) throw createdError;
 
-      const eventsWithCounts = data?.map(event => ({
+      // Fetch events user has RSVP'd to
+      const { data: rsvpEvents, error: rsvpError } = await supabase
+        .from('events')
+        .select(`
+          *,
+          profiles!events_creator_id_fkey (
+            first_name,
+            last_name,
+            profile_photo_url
+          ),
+          rsvps!inner (
+            id,
+            status,
+            user_id
+          )
+        `)
+        .eq('rsvps.user_id', userProfileId)
+        .order('date_time', { ascending: true });
+
+      if (rsvpError) throw rsvpError;
+
+      // Combine and deduplicate events
+      const allEvents = [...(createdEvents || []), ...(rsvpEvents || [])];
+      const uniqueEvents = allEvents.filter((event, index, self) => 
+        index === self.findIndex(e => e.id === event.id)
+      );
+
+      const eventsWithCounts = uniqueEvents.map(event => ({
         ...event,
         rsvp_count: event.rsvps?.filter(r => r.status === 'confirmed').length || 0,
         user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
-      })) || [];
+      }));
 
       setMyEvents(eventsWithCounts);
     } catch (error: any) {

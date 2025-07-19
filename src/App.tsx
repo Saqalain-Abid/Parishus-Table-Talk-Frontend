@@ -19,6 +19,7 @@ import AdminEvents from "./pages/admin/AdminEvents";
 import AdminCreateEvent from "./pages/admin/AdminCreateEvent";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminRSVPs from "./pages/admin/AdminRSVPs";
+import AdminReservations from "./pages/admin/AdminReservations";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminReports from "./pages/admin/AdminReports";
@@ -31,6 +32,7 @@ import RoleDebugger from "./components/auth/RoleDebugger";
 import UserDashboard from "./pages/UserDashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import NotFound from "./pages/NotFound";
+import RSVPs from "./pages/RSVPs";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +69,12 @@ const App = () => (
                   <Navigation />
                   <ExploreEvents />
                 </>
+              } />
+              <Route path="/rsvps" element={
+                <ProtectedRoute>
+                  <Navigation />
+                  <RSVPs />
+                </ProtectedRoute>
               } />
               <Route path="/crossed-paths" element={
                 <ProtectedRoute>
@@ -145,6 +153,13 @@ const App = () => (
                 <ProtectedAdminRoute>
                   <AdminLayout>
                     <AdminRSVPs />
+                  </AdminLayout>
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/reservations" element={
+                <ProtectedAdminRoute>
+                  <AdminLayout>
+                    <AdminReservations />
                   </AdminLayout>
                 </ProtectedAdminRoute>
               } />

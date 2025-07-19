@@ -38,8 +38,8 @@ const Navigation = () => {
     { icon: Home, label: 'Home', path: '/' },
     { icon: Calendar, label: 'My Events', path: '/events' },
     { icon: Search, label: 'Explore', path: '/explore' },
-    { icon: Heart, label: 'Crossed Paths', path: '/crossed-paths' },
-    { icon: Star, label: 'Feedback', path: '/feedback' },
+    { icon: Heart, label: 'RSVPs', path: '/rsvps' },
+    { icon: Star, label: 'Crossed Paths', path: '/crossed-paths' },
     { icon: CreditCard, label: 'Subscription', path: '/subscription' },
   ];
 
