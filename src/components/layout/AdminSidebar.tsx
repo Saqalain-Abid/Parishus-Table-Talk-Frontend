@@ -32,7 +32,9 @@ const AdminSidebar = () => {
 
   const isActive = (path: string) => currentPath === path;
   const getNavCls = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-muted text-primary font-medium" : "hover:bg-muted/50";
+    isActive 
+      ? "bg-primary text-primary-foreground shadow-md font-medium" 
+      : "hover:bg-muted/50 hover:text-foreground transition-all duration-200";
 
   // Define navigation items based on role
   const getNavigationItems = () => {
@@ -61,28 +63,36 @@ const AdminSidebar = () => {
   const isExpanded = navigationItems.some((i) => isActive(i.url));
 
   return (
-    <Sidebar>
-      <SidebarContent>
+    <Sidebar className="border-r border-border/50 bg-card/50 backdrop-blur-sm">
+      <SidebarContent className="py-6">
         <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center space-x-2">
+          <SidebarGroupLabel className="flex items-center space-x-3 px-4 py-3 mb-4 bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg mx-3">
             {profile?.role === 'superadmin' ? (
-              <Crown className="h-4 w-4" />
+              <Crown className="h-5 w-5 text-primary" />
             ) : (
-              <Shield className="h-4 w-4" />
+              <Shield className="h-5 w-5 text-primary" />
             )}
-            <span>
+            <span className="font-semibold text-foreground">
               {profile?.role === 'superadmin' ? 'Super Admin' : 'Admin'} Panel
             </span>
           </SidebarGroupLabel>
 
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-2 px-3">
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end className={getNavCls}>
-                      <item.icon className="mr-2 h-4 w-4" />
-                      <span>{item.title}</span>
+                    <NavLink 
+                      to={item.url} 
+                      end 
+                      className={({ isActive }) => `
+                        ${getNavCls({ isActive })}
+                        flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium
+                        ${isActive ? 'shadow-lg' : ''}
+                      `}
+                    >
+                      <item.icon className="h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

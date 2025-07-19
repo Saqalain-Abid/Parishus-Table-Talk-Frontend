@@ -349,61 +349,102 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Welcome Header */}
+      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background rounded-2xl p-8 border border-primary/20">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Welcome back, {profile?.first_name}!
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Here's what's happening with your platform today.
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" className="flex items-center space-x-2">
+              <RefreshCw className="h-4 w-4" />
+              <span>Refresh Data</span>
+            </Button>
+            <Button className="flex items-center space-x-2">
+              <Download className="h-4 w-4" />
+              <span>Export Report</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-700 dark:text-blue-300">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="relative overflow-hidden bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 hover:shadow-lg transition-all duration-300">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary/20 to-transparent rounded-bl-full" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Total Users</CardTitle>
+              <div className="p-2 bg-primary/10 rounded-full">
+                <Users className="h-5 w-5 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">{stats.totalUsers}</div>
-              <p className="text-xs text-blue-600 dark:text-blue-400">{stats.activeUsers} active users</p>
+              <div className="text-3xl font-bold text-foreground mb-1">{stats.totalUsers.toLocaleString()}</div>
+              <p className="text-sm text-muted-foreground flex items-center space-x-1">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span>{stats.activeUsers} active users</span>
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-green-700 dark:text-green-300">Total Events</CardTitle>
-              <Calendar className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <Card className="relative overflow-hidden bg-gradient-to-br from-accent/5 to-accent/10 border-accent/20 hover:shadow-lg transition-all duration-300">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-accent/20 to-transparent rounded-bl-full" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Total Events</CardTitle>
+              <div className="p-2 bg-accent/10 rounded-full">
+                <Calendar className="h-5 w-5 text-accent" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-900 dark:text-green-100">{stats.totalEvents}</div>
-              <p className="text-xs text-green-600 dark:text-green-400">Active events</p>
+              <div className="text-3xl font-bold text-foreground mb-1">{stats.totalEvents.toLocaleString()}</div>
+              <p className="text-sm text-muted-foreground">Active events</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-purple-700 dark:text-purple-300">RSVPs This Month</CardTitle>
-              <UserCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+          <Card className="relative overflow-hidden bg-gradient-to-br from-secondary/5 to-secondary/10 border-secondary/20 hover:shadow-lg transition-all duration-300">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-secondary/20 to-transparent rounded-bl-full" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">RSVPs This Month</CardTitle>
+              <div className="p-2 bg-secondary/10 rounded-full">
+                <UserCheck className="h-5 w-5 text-secondary-foreground" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">{stats.monthlyRSVPs}</div>
-              <p className="text-xs text-purple-600 dark:text-purple-400">Event registrations</p>
+              <div className="text-3xl font-bold text-foreground mb-1">{stats.monthlyRSVPs.toLocaleString()}</div>
+              <p className="text-sm text-muted-foreground">Event registrations</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900 border-orange-200 dark:border-orange-800">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-orange-700 dark:text-orange-300">Monthly Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+          <Card className="relative overflow-hidden bg-gradient-to-br from-muted/5 to-muted/10 border-muted/20 hover:shadow-lg transition-all duration-300">
+            <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-muted/20 to-transparent rounded-bl-full" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Monthly Revenue</CardTitle>
+              <div className="p-2 bg-muted/10 rounded-full">
+                <DollarSign className="h-5 w-5 text-foreground" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-900 dark:text-orange-100">${stats.monthlyRevenue.toLocaleString()}</div>
-              <p className="text-xs text-orange-600 dark:text-orange-400">Yearly: ${stats.yearlyRevenue.toLocaleString()}</p>
+              <div className="text-3xl font-bold text-foreground mb-1">${stats.monthlyRevenue.toLocaleString()}</div>
+              <p className="text-sm text-muted-foreground">Yearly: ${stats.yearlyRevenue.toLocaleString()}</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5" />
-                <span>User Growth Trends</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card className="shadow-lg border-0 bg-card/80 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center space-x-3 text-lg">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                </div>
+                <span className="font-semibold">User Growth Trends</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -426,11 +467,13 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5" />
-                <span>Event Creation Trends</span>
+          <Card className="shadow-lg border-0 bg-card/80 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center space-x-3 text-lg">
+                <div className="p-2 bg-accent/10 rounded-lg">
+                  <BarChart3 className="h-5 w-5 text-accent" />
+                </div>
+                <span className="font-semibold">Event Creation Trends</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -453,11 +496,13 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <DollarSign className="h-5 w-5" />
-                <span>Revenue Trends</span>
+          <Card className="shadow-lg border-0 bg-card/80 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center space-x-3 text-lg">
+                <div className="p-2 bg-secondary/10 rounded-lg">
+                  <DollarSign className="h-5 w-5 text-secondary-foreground" />
+                </div>
+                <span className="font-semibold">Revenue Trends</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -480,11 +525,13 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Star className="h-5 w-5" />
-                <span>Top Dining Styles</span>
+          <Card className="shadow-lg border-0 bg-card/80 backdrop-blur-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center space-x-3 text-lg">
+                <div className="p-2 bg-muted/10 rounded-lg">
+                  <Star className="h-5 w-5 text-foreground" />
+                </div>
+                <span className="font-semibold">Top Dining Styles</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
