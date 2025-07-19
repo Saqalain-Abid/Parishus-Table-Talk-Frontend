@@ -33,7 +33,6 @@ const CreateEvent = () => {
     is_mystery_dinner: false
   });
   const [newTag, setNewTag] = useState('');
-  
   const { user } = useAuth();
   const { profile } = useProfile();
   const navigate = useNavigate();
@@ -65,26 +64,19 @@ const CreateEvent = () => {
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user) return;
-
     setUploading(true);
-    
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `event-photos/${fileName}`;
-
       const { error: uploadError } = await supabase.storage
         .from('event-photos')
         .upload(filePath, file);
-
       if (uploadError) throw uploadError;
-
       const { data: { publicUrl } } = supabase.storage
         .from('event-photos')
         .getPublicUrl(filePath);
-
       handleInputChange('cover_photo_url', publicUrl);
-      
       toast({
         title: "Photo uploaded!",
         description: "Your event cover photo has been saved.",
@@ -110,18 +102,12 @@ const CreateEvent = () => {
       });
       return;
     }
-
-    console.log('User:', user.id);
-    console.log('Profile:', profile);
-    
     setLoading(true);
-    
     try {
       const dateTime = new Date(`${formData.date}T${formData.time}`);
       const rsvpDeadline = formData.rsvp_deadline_date && formData.rsvp_deadline_time 
         ? new Date(`${formData.rsvp_deadline_date}T${formData.rsvp_deadline_time}`)
         : null;
-      
       const { data, error } = await supabase
         .from('events')
         .insert({
@@ -132,20 +118,18 @@ const CreateEvent = () => {
           location_name: formData.location_name,
           location_address: formData.location_address,
           max_attendees: formData.max_attendees,
-          dining_style: formData.dining_style as any || null,
-          dietary_theme: formData.dietary_theme as any || null,
+          dining_style: formData.dining_style || null,
+          dietary_theme: formData.dietary_theme || null,
           rsvp_deadline: rsvpDeadline?.toISOString() || null,
           tags: formData.tags,
           cover_photo_url: formData.cover_photo_url || null,
           is_mystery_dinner: formData.is_mystery_dinner,
-          status: 'active' as any
+          status: 'active'
         })
         .select()
         .single();
-
       if (error) throw error;
 
-      // Automatically add creator to RSVP table
       const { error: rsvpError } = await supabase
         .from('rsvps')
         .insert({
@@ -153,13 +137,14 @@ const CreateEvent = () => {
           user_id: profile.id,
           status: 'confirmed'
         });
-
       if (rsvpError) {
-        console.error('Error creating creator RSVP:', rsvpError);
-        // Don't fail the entire operation if RSVP creation fails
+        toast({
+          title: 'RSVP Error',
+          description: rsvpError.message,
+          variant: 'destructive'
+        });
       }
 
-      // Create reservation for creator
       const { error: reservationError } = await supabase
         .from('reservations')
         .insert({
@@ -168,17 +153,18 @@ const CreateEvent = () => {
           reservation_type: 'standard',
           reservation_status: 'confirmed'
         });
-
       if (reservationError) {
-        console.error('Error creating creator reservation:', reservationError);
-        // Don't fail the entire operation if reservation creation fails
+        toast({
+          title: 'Reservation Error',
+          description: reservationError.message,
+          variant: 'destructive'
+        });
       }
 
       toast({
         title: "Event created!",
         description: "Your event has been created successfully and you're automatically attending.",
       });
-
       navigate('/events');
     } catch (error: any) {
       toast({
@@ -192,10 +178,10 @@ const CreateEvent = () => {
   };
 
   const isFormValid = formData.name && formData.description && formData.date && 
-                     formData.time && formData.location_name;
+                      formData.time && formData.location_name;
 
   return (
-    <div className="min-h-screen bg-background">
+   <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
           <div>
