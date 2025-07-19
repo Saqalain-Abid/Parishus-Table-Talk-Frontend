@@ -59,6 +59,15 @@ const RSVPs = () => {
     if (!user) return;
 
     try {
+      // Get user's profile ID first
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
       const { data, error } = await supabase
         .from('reservations')
         .select(`
@@ -79,7 +88,7 @@ const RSVPs = () => {
             )
           )
         `)
-        .eq('user_id', user.id)
+        .eq('user_id', profile.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -102,6 +111,15 @@ const RSVPs = () => {
     if (!confirmed) return;
 
     try {
+      // Get user's profile ID first
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (profileError) throw profileError;
+
       // Delete reservation
       const { error: reservationError } = await supabase
         .from('reservations')
@@ -111,21 +129,13 @@ const RSVPs = () => {
       if (reservationError) throw reservationError;
 
       // Also delete from rsvps table
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
+      const { error: rsvpError } = await supabase
+        .from('rsvps')
+        .delete()
+        .eq('event_id', eventId)
+        .eq('user_id', profile.id);
 
-      if (profile) {
-        const { error: rsvpError } = await supabase
-          .from('rsvps')
-          .delete()
-          .eq('event_id', eventId)
-          .eq('user_id', profile.id);
-
-        if (rsvpError) console.log('No RSVP found to delete');
-      }
+      if (rsvpError) console.log('No RSVP found to delete');
 
       toast({
         title: "RSVP Cancelled",

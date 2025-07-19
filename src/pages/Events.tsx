@@ -236,7 +236,7 @@ const Events = () => {
             event_id: eventId,
             user_id: userProfileId,
             reservation_type: 'standard',
-            reservation_status: 'pending'
+            reservation_status: 'confirmed'
           });
 
         if (reservationError) throw reservationError;

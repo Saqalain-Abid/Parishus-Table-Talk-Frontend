@@ -76,12 +76,20 @@ const EventRSVP = () => {
 
       if (eventError) throw eventError;
 
-      // Check if user has existing RSVP
+      // Check if user has existing RSVP - need to get profile ID first
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (profileError) throw profileError;
+
       const { data: rsvpData, error: rsvpError } = await supabase
         .from('rsvps')
         .select('*')
         .eq('event_id', eventId)
-        .eq('user_id', user?.id)
+        .eq('user_id', profile.id)
         .single();
 
       if (rsvpError && rsvpError.code !== 'PGRST116') {
@@ -124,12 +132,20 @@ const EventRSVP = () => {
         
         toast({ title: `RSVP updated to "${response}"` });
       } else {
-        // Create new RSVP
+        // Create new RSVP - need to get profile ID first
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
         const { error } = await supabase
           .from('rsvps')
           .insert({
             event_id: eventId,
-            user_id: user.id,
+            user_id: profile.id,
             response_status: response
           });
 
