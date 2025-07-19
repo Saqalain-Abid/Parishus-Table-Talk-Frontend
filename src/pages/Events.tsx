@@ -17,7 +17,8 @@ import {
   Heart,
   UserCheck,
   Edit,
-  Trash2
+  Trash2,
+  Eye
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -185,6 +186,9 @@ const Events = () => {
   const handleRSVP = async (eventId: string) => {
     if (!user) return;
 
+    const confirmed = window.confirm("Are you sure you want to RSVP to this event?");
+    if (!confirmed) return;
+
     try {
       if (!userProfileId) {
         throw new Error('Profile not found');
@@ -208,8 +212,8 @@ const Events = () => {
           description: "You're no longer attending this event",
         });
       } else {
-        // Add RSVP
-        const { error } = await supabase
+        // Add RSVP with reservation
+        const { error: rsvpError } = await supabase
           .from('rsvps')
           .insert({
             event_id: eventId,
@@ -217,11 +221,23 @@ const Events = () => {
             status: 'confirmed'
           });
 
-        if (error) throw error;
+        if (rsvpError) throw rsvpError;
+
+        // Create reservation entry
+        const { error: reservationError } = await supabase
+          .from('reservations')
+          .insert({
+            event_id: eventId,
+            user_id: user.id,
+            reservation_type: 'standard',
+            reservation_status: 'pending'
+          });
+
+        if (reservationError) throw reservationError;
 
         toast({
           title: "RSVP confirmed!",
-          description: "You're now attending this event",
+          description: "You're now attending this event. Your reservation is pending confirmation.",
         });
       }
 
@@ -366,22 +382,47 @@ const Events = () => {
                 {event.profiles?.first_name} {event.profiles?.last_name}
               </span>
             </div>
+          </div>
 
-            {!isCreator && (
+          {/* Action Buttons */}
+          <div className="flex gap-2 mt-4">
+            {/* Details Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/event/${event.id}/details`)}
+              className="flex-1"
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              Details
+            </Button>
+
+            {/* Edit Button (only for creators) */}
+            {isCreator && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/event/${event.id}/edit`)}
+                className="flex-1"
+              >
+                <Edit className="h-4 w-4 mr-1" />
+                Edit
+              </Button>
+            )}
+
+            {/* RSVP Button (only for non-creators) */}
+            {!isCreator && spotsLeft > 0 && (
               <Button
                 onClick={() => handleRSVP(event.id)}
                 variant={hasRSVP ? "default" : "outline"}
                 size="sm"
-                className={hasRSVP ? "bg-sage-green hover:bg-sage-green/90" : ""}
-                disabled={!hasRSVP && spotsLeft <= 0}
+                className={`flex-1 ${hasRSVP ? "bg-sage-green hover:bg-sage-green/90" : ""}`}
               >
                 {hasRSVP ? (
                   <>
                     <UserCheck className="h-4 w-4 mr-1" />
                     Going
                   </>
-                ) : spotsLeft <= 0 ? (
-                  'Full'
                 ) : (
                   <>
                     <Heart className="h-4 w-4 mr-1" />
@@ -390,10 +431,29 @@ const Events = () => {
                 )}
               </Button>
             )}
-            
+
+            {/* Delete Button (only for creators and only in My Events) */}
+            {showActions && isCreator && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => deleteEvent(event.id)}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+
+            {/* Status Badges */}
             {isCreator && (
-              <Badge variant="outline">
+              <Badge variant="outline" className="px-2 py-1">
                 Creator
+              </Badge>
+            )}
+            
+            {spotsLeft === 0 && !isCreator && (
+              <Badge variant="secondary" className="px-2 py-1">
+                Full
               </Badge>
             )}
           </div>
