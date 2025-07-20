@@ -86,8 +86,6 @@ const Events = () => {
 
   const fetchEvents = async () => {
     try {
-      if (!userProfileId) return;
-
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -108,16 +106,12 @@ const Events = () => {
 
       if (error) throw error;
 
-      // Filter out events that the user has already RSVPed to
+      // Show ALL events (no filtering)
       const eventsWithCounts = data?.map(event => ({
         ...event,
         rsvp_count: event.rsvps?.filter(r => r.status === 'confirmed').length || 0,
         user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
-      })).filter(event => {
-        // Show only events that user has NOT RSVPed to
-        const hasRSVP = event.rsvps?.some(r => r.user_id === userProfileId && r.status === 'confirmed');
-        return !hasRSVP;
-      }) || [];
+      })) || [];
 
       setEvents(eventsWithCounts);
     } catch (error: any) {
@@ -448,8 +442,8 @@ const Events = () => {
                         </Button>
                       )}
 
-                      {/* RSVP Button (for everyone) */}
-                      {spotsLeft > 0 && (
+                      {/* RSVP Button (only for events not created by user) */}
+                      {!isCreator && spotsLeft > 0 && (
                         <Button
                           onClick={() => handleRSVP(event.id)}
                           variant={hasRSVP ? "default" : "outline"}
