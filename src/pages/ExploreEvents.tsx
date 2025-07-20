@@ -89,8 +89,9 @@ const ExploreEvents = () => {
   }, [user]);
 
   const fetchEvents = async () => {
-    console.log('fetchEvents called');
+    console.log('📅 fetchEvents called');
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -109,9 +110,12 @@ const ExploreEvents = () => {
         .eq('status', 'active')
         .order('date_time', { ascending: true });
 
-      console.log('Events data:', data, 'Error:', error);
+      console.log('📅 Events query result:', { data: data?.length || 0, error });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Events query error:', error);
+        throw error;
+      }
 
       const eventsWithCounts = data?.map(event => ({
         ...event,
@@ -119,16 +123,18 @@ const ExploreEvents = () => {
         user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
       })) || [];
 
-      console.log('Events with counts:', eventsWithCounts);
+      console.log('📅 Events with counts:', eventsWithCounts?.length || 0);
       setEvents(eventsWithCounts);
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error('❌ Error fetching events:', error);
       toast({
         title: "Error",
         description: "Failed to load events",
         variant: "destructive",
       });
+      setEvents([]); // Set empty array on error
     } finally {
+      console.log('📅 Setting loading to false');
       setLoading(false);
     }
   };
@@ -352,23 +358,35 @@ const ExploreEvents = () => {
     );
   };
 
-  console.log('Component render:', { loading, events, filteredEvents: filteredEvents.length });
+  console.log('Component render:', { 
+    loading, 
+    events: events?.length || 0, 
+    filteredEvents: filteredEvents?.length || 0,
+    userProfileId,
+    user: !!user 
+  });
 
   if (loading) {
+    console.log('Still loading...');
     return (
       <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">Loading events...</div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-foreground">Loading events...</p>
+          </div>
         </div>
       </div>
     );
   }
 
+  console.log('📋 About to render:', { eventsLength: events.length, filteredLength: filteredEvents.length });
+  
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Explore Events</h1>
+          <h1 className="text-3xl font-bold mb-2 text-foreground">Explore Events</h1>
           <p className="text-muted-foreground">Discover dining experiences and connect with food lovers</p>
         </div>
 
@@ -445,7 +463,7 @@ const ExploreEvents = () => {
         {filteredEvents.length === 0 ? (
           <div className="text-center py-12">
             <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No events found</h3>
+            <h3 className="text-lg font-semibold mb-2 text-foreground">No events found</h3>
             <p className="text-muted-foreground mb-4">
               {searchTerm || locationFilter || diningStyleFilter || dietaryFilter
                 ? "Try adjusting your search or filters"
