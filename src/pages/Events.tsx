@@ -129,35 +129,9 @@ const Events = () => {
     if (!user || !userProfileId) return;
 
     try {
-      console.log('Fetching my events for user:', user.id, 'profile:', userProfileId);
+      console.log('Fetching RSVP events for user:', user.id, 'profile:', userProfileId);
       
-      // Fetch events created by user
-      const { data: createdEvents, error: createdError } = await supabase
-        .from('events')
-        .select(`
-          *,
-          profiles:creator_id (
-            first_name,
-            last_name,
-            profile_photo_url
-          ),
-          rsvps (
-            id,
-            status,
-            user_id
-          )
-        `)
-        .eq('creator_id', userProfileId)
-        .order('date_time', { ascending: true });
-
-      if (createdError) {
-        console.error('Created events error:', createdError);
-        throw createdError;
-      }
-
-      console.log('Created events:', createdEvents);
-
-      // Fetch events user has RSVP'd to
+      // Fetch only events user has RSVP'd to (excluding events they created)
       const { data: rsvpEvents, error: rsvpError } = await supabase
         .from('events')
         .select(`
@@ -174,6 +148,8 @@ const Events = () => {
           )
         `)
         .eq('rsvps.user_id', userProfileId)
+        .eq('rsvps.status', 'confirmed')
+        .neq('creator_id', userProfileId)
         .order('date_time', { ascending: true });
 
       if (rsvpError) {
@@ -183,15 +159,7 @@ const Events = () => {
 
       console.log('RSVP events:', rsvpEvents);
 
-      // Combine and deduplicate events
-      const allEvents = [...(createdEvents || []), ...(rsvpEvents || [])];
-      const uniqueEvents = allEvents.filter((event, index, self) => 
-        index === self.findIndex(e => e.id === event.id)
-      );
-
-      console.log('All unique events:', uniqueEvents);
-
-      const eventsWithCounts = uniqueEvents.map(event => ({
+      const eventsWithCounts = (rsvpEvents || []).map(event => ({
         ...event,
         rsvp_count: event.rsvps?.filter(r => r.status === 'confirmed').length || 0,
         user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
@@ -450,11 +418,26 @@ const Events = () => {
                       </Button>
 
                       {/* Edit Button (only for creators) */}
-                      {isCreator && (
+                      {isCreator ? (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => navigate(`/event/${event.id}/edit`)}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            toast({
+                              title: "Cannot edit event",
+                              description: "Sorry, you did not create this event, so you cannot edit it.",
+                              variant: "destructive"
+                            });
+                          }}
+                          className="opacity-50"
                         >
                           <Edit className="h-3 w-3" />
                         </Button>
