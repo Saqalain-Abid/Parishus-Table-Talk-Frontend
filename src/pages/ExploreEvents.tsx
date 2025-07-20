@@ -11,97 +11,110 @@ import { MapPin, Clock, Users, Search, Calendar, Utensils } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 
+interface Event {
+  id: string;
+  name: string;
+  description: string;
+  date_time: string;
+  location_name: string;
+  location_address: string;
+  max_attendees: number;
+  dining_style: string;
+  dietary_theme: string;
+  tags: string[];
+  cover_photo_url: string;
+  creator_id: string;
+  rsvp_count: number;
+  user_rsvp: any[];
+  profiles: {
+    first_name: string;
+    last_name: string;
+    profile_photo_url: string;
+  };
+}
+
 const ExploreEvents = () => {
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [diningStyleFilter, setDiningStyleFilter] = useState('');
   const [dietaryFilter, setDietaryFilter] = useState('');
-  const [userProfileId, setUserProfileId] = useState(null);
-
+  const [userProfileId, setUserProfileId] = useState<string | null>(null);
+  
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log('ExploreEvents component mounted');
     initializeComponent();
   }, [user]);
 
   const initializeComponent = async () => {
     try {
+      console.log('Initializing component...');
+      
       if (user) {
+        console.log('Getting user profile...');
         const { data: profile } = await supabase
           .from('profiles')
           .select('id')
           .eq('user_id', user.id)
           .maybeSingle();
-
+        
+        console.log('Profile result:', profile);
         setUserProfileId(profile?.id || null);
       }
 
+      console.log('Fetching events...');
       await fetchEvents();
+      
     } catch (error) {
+      console.error('Error in initialization:', error);
       setLoading(false);
     }
   };
 
   const fetchEvents = async () => {
     try {
+      console.log('Starting fetchEvents');
       setLoading(true);
-
+      
       const { data, error } = await supabase
         .from('events')
-        .select(
-          `
-            *,
-            profiles!events_creator_id_fkey (
-              first_name,
-              last_name,
-              profile_photo_url
-            ),
-            rsvps (
-              id,
-              user_id,
-              status
-            )
-          `
-        )
+        .select(`
+          *,
+          profiles!events_creator_id_fkey (
+            first_name,
+            last_name,
+            profile_photo_url
+          ),
+          rsvps (
+            id,
+            user_id,
+            status
+          )
+        `)
         .eq('status', 'active')
         .order('date_time', { ascending: true });
 
-      if (error || !data || data.length === 0) {
-        setEvents([
-          {
-            id: 'dummy-event-1',
-            name: 'Taco Tuesday Fiesta',
-            description: 'Join us for an evening full of tacos, margaritas, and fun!',
-            date_time: new Date().toISOString(),
-            location_name: 'Food Hall NYC',
-            location_address: '123 Food Street',
-            max_attendees: 20,
-            dining_style: 'foodie_enthusiast',
-            dietary_theme: 'vegan',
-            tags: ['tacos', 'mexican', 'fun'],
-            cover_photo_url: 'https://via.placeholder.com/400x200.png?text=Event+Image',
-            creator_id: 'dummy-user-id',
-            rsvp_count: 5,
-            user_rsvp: [],
-            profiles: {
-              first_name: 'Alex',
-              last_name: 'Johnson',
-              profile_photo_url: '',
-            }
-          }
-        ]);
-      } else {
-        const eventsWithCounts = data.map(event => ({
-          ...event,
-          rsvp_count: event.rsvps?.filter(r => r.status === 'confirmed').length || 0,
-          user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
-        }));
-        setEvents(eventsWithCounts);
+      console.log('Events query result:', { dataLength: data?.length || 0, error });
+
+      if (error) {
+        console.error('Events query error:', error);
+        throw error;
       }
+
+      const eventsWithCounts = data?.map(event => ({
+        ...event,
+        rsvp_count: event.rsvps?.filter(r => r.status === 'confirmed').length || 0,
+        user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
+      })) || [];
+
+      console.log('Processed events:', eventsWithCounts.length);
+      setEvents(eventsWithCounts);
     } catch (error) {
+      console.error('Error fetching events:', error);
       toast({
         title: "Error",
         description: "Failed to load events",
@@ -109,11 +122,12 @@ const ExploreEvents = () => {
       });
       setEvents([]);
     } finally {
+      console.log('Setting loading to false');
       setLoading(false);
     }
   };
 
-  const handleRSVP = async (eventId) => {
+  const handleRSVP = async (eventId: string) => {
     if (!user || !userProfileId) {
       toast({
         title: "Authentication required",
@@ -136,26 +150,51 @@ const ExploreEvents = () => {
 
     try {
       if (hasRSVP) {
-        await supabase.from('rsvps').delete().eq('event_id', eventId).eq('user_id', userProfileId);
-        await supabase.from('reservations').delete().eq('event_id', eventId).eq('user_id', userProfileId);
+        // Cancel existing RSVP
+        const { error: rsvpError } = await supabase
+          .from('rsvps')
+          .delete()
+          .eq('event_id', eventId)
+          .eq('user_id', userProfileId);
+
+        if (rsvpError) throw rsvpError;
+
+        // Also remove from reservations table
+        const { error: reservationError } = await supabase
+          .from('reservations')
+          .delete()
+          .eq('event_id', eventId)
+          .eq('user_id', userProfileId);
+
+        if (reservationError) console.log('No reservation found to delete');
 
         toast({
           title: "RSVP Cancelled",
           description: "You have cancelled your RSVP for this event.",
         });
       } else {
-        await supabase.from('rsvps').insert({
-          event_id: eventId,
-          user_id: userProfileId,
-          status: 'confirmed'
-        });
+        // Create new RSVP
+        const { error: rsvpError } = await supabase
+          .from('rsvps')
+          .insert({
+            event_id: eventId,
+            user_id: userProfileId,
+            status: 'confirmed'
+          });
 
-        await supabase.from('reservations').insert({
-          event_id: eventId,
-          user_id: userProfileId,
-          reservation_type: 'standard',
-          reservation_status: 'confirmed'
-        });
+        if (rsvpError) throw rsvpError;
+
+        // Create reservation entry
+        const { error: reservationError } = await supabase
+          .from('reservations')
+          .insert({
+            event_id: eventId,
+            user_id: userProfileId,
+            reservation_type: 'standard',
+            reservation_status: 'confirmed'
+          });
+
+        if (reservationError) console.log('Failed to create reservation');
 
         toast({
           title: "RSVP Confirmed",
@@ -165,6 +204,7 @@ const ExploreEvents = () => {
 
       fetchEvents();
     } catch (error) {
+      console.error('Error handling RSVP:', error);
       toast({
         title: "Error",
         description: "Failed to update RSVP",
@@ -177,48 +217,49 @@ const ExploreEvents = () => {
     const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          event.location_name?.toLowerCase().includes(searchTerm.toLowerCase());
-
+    
     const matchesLocation = !locationFilter || event.location_name?.toLowerCase().includes(locationFilter.toLowerCase());
     const matchesDiningStyle = !diningStyleFilter || event.dining_style === diningStyleFilter;
     const matchesDietary = !dietaryFilter || event.dietary_theme === dietaryFilter;
-
+    
     return matchesSearch && matchesLocation && matchesDiningStyle && matchesDietary;
+  });
+
+  console.log('Component render state:', { 
+    loading, 
+    eventsCount: events.length, 
+    filteredCount: filteredEvents.length 
   });
 
   if (loading) {
     return (
       <div className="min-h-screen bg-background text-foreground">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-foreground">Loading events...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2 text-foreground">Explore Events</h1>
           <p className="text-muted-foreground">Discover dining experiences and connect with food lovers</p>
         </div>
 
+        {/* Search and Filters */}
         <div className="mb-8 space-y-4">
           <div className="flex gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search events, locations, or descriptions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search events, locations, or descriptions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
             {user && (
-              <Button variant="outline" onClick={() => navigate('/create-event')} className="gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/create-event')}
+                className="gap-2"
+              >
                 <Calendar className="w-4 h-4" />
                 Create Event
               </Button>
@@ -232,7 +273,7 @@ const ExploreEvents = () => {
               onChange={(e) => setLocationFilter(e.target.value)}
               className="max-w-xs"
             />
-
+            
             <Select value={diningStyleFilter} onValueChange={setDiningStyleFilter}>
               <SelectTrigger className="max-w-xs">
                 <SelectValue placeholder="Dining Style" />
@@ -268,6 +309,7 @@ const ExploreEvents = () => {
           </div>
         </div>
 
+        {/* Events Display */}
         {filteredEvents.length === 0 ? (
           <div className="text-center py-12">
             <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -275,7 +317,8 @@ const ExploreEvents = () => {
             <p className="text-muted-foreground mb-4">
               {searchTerm || locationFilter || diningStyleFilter || dietaryFilter
                 ? "Try adjusting your search or filters"
-                : "No events are available at the moment"}
+                : "No events are available at the moment"
+              }
             </p>
             {user && (
               <Button onClick={() => navigate('/create-event')} className="gap-2">
@@ -326,25 +369,256 @@ const ExploreEvents = () => {
                   <CardContent className="space-y-4">
                     {event.cover_photo_url && (
                       <div className="w-full h-48 bg-muted rounded-lg overflow-hidden">
-                        <img src={event.cover_photo_url} alt={event.name} className="w-full h-full object-cover" />
+                        <img 
+                          src={event.cover_photo_url} 
+                          alt={event.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     )}
-
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="w-4 h-4" />
                         <span>{eventDate.toLocaleDateString()} at {eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <MapPin className="w-4 h-4" />
                         <span>{event.location_name}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Users className="w-4 h-4" />
                         <span>{event.rsvp_count || 0} / {event.max_attendees} attending</span>
                       </div>
+                      
                       {event.dining_style && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Utensils className="w-4 h-4" />
+                          <span>{event.dining_style.replace('_', ' ')}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {event.description && (
+                      <p className="text-sm text-muted-foreground">
+                        {event.description.length > 150 ? event.description.substring(0, 150) + '...' : event.description}
+                      </p>
+                    )}
+
+                    {event.tags && event.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {event.tags.map((tag, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => navigate(`/event/${event.id}/details`)}
+                      >
+                        Details
+                      </Button>
+                      {!isCreator && isUpcoming && spotsLeft > 0 && (
+                        <Button
+                          onClick={() => handleRSVP(event.id)}
+                          variant={hasRSVP ? "outline" : "default"}
+                          className="flex-1"
+                        >
+                          {hasRSVP ? 'Cancel RSVP' : 'RSVP'}
+                        </Button>
+                      )}
+                      {isCreator && (
+                        <Badge variant="outline" className="px-3 py-1">
+                          Your Event
+                        </Badge>
+                      )}
+                      {spotsLeft === 0 && !isCreator && (
+                        <Badge variant="secondary" className="px-3 py-1">
+                          Event Full
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2 text-foreground">Explore Events</h1>
+          <p className="text-muted-foreground">Discover dining experiences and connect with food lovers</p>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="mb-8 space-y-4">
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search events, locations, or descriptions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+            {user && (
+              <Button
+                variant="outline"
+                onClick={() => navigate('/create-event')}
+                className="gap-2"
+              >
+                <Calendar className="w-4 h-4" />
+                Create Event
+              </Button>
+            )}
+          </div>
+
+          <div className="flex gap-4 flex-wrap">
+            <Input
+              placeholder="Filter by location..."
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              className="max-w-xs"
+            />
+            
+            <Select value={diningStyleFilter} onValueChange={setDiningStyleFilter}>
+              <SelectTrigger className="max-w-xs">
+                <SelectValue placeholder="Dining Style" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Styles</SelectItem>
+                <SelectItem value="adventurous">Adventurous</SelectItem>
+                <SelectItem value="foodie_enthusiast">Foodie Enthusiast</SelectItem>
+                <SelectItem value="local_lover">Local Lover</SelectItem>
+                <SelectItem value="comfort_food">Comfort Food</SelectItem>
+                <SelectItem value="health_conscious">Health Conscious</SelectItem>
+                <SelectItem value="social_butterfly">Social Butterfly</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={dietaryFilter} onValueChange={setDietaryFilter}>
+              <SelectTrigger className="max-w-xs">
+                <SelectValue placeholder="Dietary Preferences" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Diets</SelectItem>
+                <SelectItem value="vegetarian">Vegetarian</SelectItem>
+                <SelectItem value="vegan">Vegan</SelectItem>
+                <SelectItem value="gluten_free">Gluten Free</SelectItem>
+                <SelectItem value="dairy_free">Dairy Free</SelectItem>
+                <SelectItem value="keto">Keto</SelectItem>
+                <SelectItem value="paleo">Paleo</SelectItem>
+                <SelectItem value="halal">Halal</SelectItem>
+                <SelectItem value="kosher">Kosher</SelectItem>
+                <SelectItem value="no_restrictions">No Restrictions</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Events Display */}
+        {filteredEvents.length === 0 ? (
+          <div className="text-center py-12">
+            <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2 text-foreground">No events found</h3>
+            <p className="text-muted-foreground mb-4">
+              {searchTerm || locationFilter || diningStyleFilter || dietaryFilter
+                ? "Try adjusting your search or filters"
+                : "No events are available at the moment"
+              }
+            </p>
+            {user && (
+              <Button onClick={() => navigate('/create-event')} className="gap-2">
+                <Calendar className="w-4 h-4" />
+                Create the first event
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredEvents.map((event) => {
+              const hasRSVP = event.user_rsvp && event.user_rsvp.length > 0;
+              const isCreator = event.creator_id === userProfileId;
+              const spotsLeft = event.max_attendees - (event.rsvp_count || 0);
+              const eventDate = new Date(event.date_time);
+              const isUpcoming = eventDate > new Date();
+
+              return (
+                <Card key={event.id} className="shadow-card border-border hover:shadow-glow transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={event.profiles?.profile_photo_url} />
+                          <AvatarFallback>
+                            {event.profiles?.first_name?.[0]}{event.profiles?.last_name?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-lg text-foreground">{event.name}</CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            by {event.profiles?.first_name} {event.profiles?.last_name}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge variant={isUpcoming ? "default" : "secondary"}>
+                          {isUpcoming ? 'Upcoming' : 'Past'}
+                        </Badge>
+                        {spotsLeft > 0 && (
+                          <Badge variant="outline" className="text-xs">
+                            {spotsLeft} spots left
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {event.cover_photo_url && (
+                      <div className="w-full h-48 bg-muted rounded-lg overflow-hidden">
+                        <img 
+                          src={event.cover_photo_url} 
+                          alt={event.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="w-4 h-4" />
+                        <span>{eventDate.toLocaleDateString()} at {eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="w-4 h-4" />
+                        <span>{event.location_name}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Users className="w-4 h-4" />
+                        <span>{event.rsvp_count || 0} / {event.max_attendees} attending</span>
+                      </div>
+                      
+                      {event.dining_style && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Utensils className="w-4 h-4" />
                           <span>{event.dining_style.replace('_', ' ')}</span>
                         </div>
