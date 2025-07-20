@@ -18,14 +18,13 @@ import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
-interface Reservation {
+interface RSVP {
   id: string;
   user_id: string;
   event_id: string;
-  reservation_type: string;
-  reservation_status: string;
+  response_status: string;
+  status: string;
   created_at: string;
-  updated_at: string;
   events: {
     id: string;
     name: string;
@@ -36,6 +35,7 @@ interface Reservation {
     max_attendees: number;
     creator_id: string;
     status: string;
+    cover_photo_url?: string;
     profiles: {
       first_name: string;
       last_name: string;
@@ -44,22 +44,22 @@ interface Reservation {
 }
 
 const RSVPs = () => {
-  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [rsvps, setRsvps] = useState<RSVP[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
-      fetchReservations();
+      fetchRSVPs();
     }
   }, [user]);
 
-  const fetchReservations = async () => {
+  const fetchRSVPs = async () => {
     if (!user) return;
 
     try {
-      console.log('Fetching reservations for user:', user.id);
+      console.log('Fetching RSVPs for user:', user.id);
       
       // Get user's profile ID first
       const { data: profile, error: profileError } = await supabase
@@ -76,7 +76,7 @@ const RSVPs = () => {
       console.log('Found profile ID:', profile.id);
 
       const { data, error } = await supabase
-        .from('reservations')
+        .from('rsvps')
         .select(`
           *,
           events (
@@ -89,6 +89,7 @@ const RSVPs = () => {
             max_attendees,
             creator_id,
             status,
+            cover_photo_url,
             profiles!events_creator_id_fkey (
               first_name,
               last_name
@@ -96,17 +97,18 @@ const RSVPs = () => {
           )
         `)
         .eq('user_id', profile.id)
+        .eq('status', 'confirmed')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Reservations query error:', error);
+        console.error('RSVPs query error:', error);
         throw error;
       }
 
-      console.log('Found reservations:', data);
-      setReservations(data || []);
+      console.log('Found RSVPs:', data);
+      setRsvps(data || []);
     } catch (error) {
-      console.error('Error fetching reservations:', error);
+      console.error('Error fetching RSVPs:', error);
       toast({
         title: "Error",
         description: "Failed to load your RSVPs",
@@ -117,7 +119,7 @@ const RSVPs = () => {
     }
   };
 
-  const cancelReservation = async (reservationId: string, eventId: string) => {
+  const cancelRSVP = async (rsvpId: string, eventId: string) => {
     const confirmed = window.confirm("Are you sure you want to cancel this RSVP?");
     if (!confirmed) return;
 
@@ -131,34 +133,34 @@ const RSVPs = () => {
 
       if (profileError) throw profileError;
 
-      // Delete reservation
-      const { error: reservationError } = await supabase
-        .from('reservations')
-        .delete()
-        .eq('id', reservationId);
-
-      if (reservationError) throw reservationError;
-
-      // Also delete from rsvps table
+      // Delete RSVP
       const { error: rsvpError } = await supabase
         .from('rsvps')
+        .delete()
+        .eq('id', rsvpId);
+
+      if (rsvpError) throw rsvpError;
+
+      // Also delete from reservations table if it exists
+      const { error: reservationError } = await supabase
+        .from('reservations')
         .delete()
         .eq('event_id', eventId)
         .eq('user_id', profile.id);
 
-      if (rsvpError) console.log('No RSVP found to delete');
+      if (reservationError) console.log('No reservation found to delete');
 
       toast({
         title: "RSVP Cancelled",
-        description: "Your reservation has been cancelled successfully.",
+        description: "Your RSVP has been cancelled successfully.",
       });
 
-      fetchReservations();
+      fetchRSVPs();
     } catch (error) {
-      console.error('Error cancelling reservation:', error);
+      console.error('Error cancelling RSVP:', error);
       toast({
         title: "Error",
-        description: "Failed to cancel reservation",
+        description: "Failed to cancel RSVP",
         variant: "destructive",
       });
     }
@@ -195,7 +197,7 @@ const RSVPs = () => {
             </p>
           </div>
 
-          {reservations.length === 0 ? (
+          {rsvps.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
                 <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -203,8 +205,8 @@ const RSVPs = () => {
                 <p className="text-muted-foreground mb-4">
                   You haven't RSVP'd to any events yet. Explore events to find something interesting!
                 </p>
-                <Button onClick={() => navigate('/explore')} className="bg-peach-gold hover:bg-peach-gold/90">
-                  Explore Events
+                <Button onClick={() => navigate('/events')} className="bg-peach-gold hover:bg-peach-gold/90">
+                  Browse Events
                 </Button>
               </CardContent>
             </Card>
@@ -217,7 +219,7 @@ const RSVPs = () => {
                     <CardTitle className="text-lg">Total RSVPs</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-3xl font-bold text-peach-gold">{reservations.length}</div>
+                    <div className="text-3xl font-bold text-peach-gold">{rsvps.length}</div>
                   </CardContent>
                 </Card>
                 <Card>
@@ -226,7 +228,7 @@ const RSVPs = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-3xl font-bold text-green-600">
-                      {reservations.filter(r => r.reservation_status === 'confirmed').length}
+                      {rsvps.filter(r => r.status === 'confirmed').length}
                     </div>
                   </CardContent>
                 </Card>
@@ -236,7 +238,7 @@ const RSVPs = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-3xl font-bold text-yellow-600">
-                      {reservations.filter(r => r.reservation_status === 'pending').length}
+                      {rsvps.filter(r => r.status === 'pending').length}
                     </div>
                   </CardContent>
                 </Card>
@@ -245,7 +247,7 @@ const RSVPs = () => {
               {/* Reservations Table */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Your Reservations</CardTitle>
+                  <CardTitle>Your RSVPs</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="border rounded-lg">
@@ -261,13 +263,13 @@ const RSVPs = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {reservations.map((reservation) => (
-                          <TableRow key={reservation.id}>
+                        {rsvps.map((rsvp) => (
+                          <TableRow key={rsvp.id}>
                             <TableCell>
                               <div>
-                                <div className="font-medium">{reservation.events.name}</div>
+                                <div className="font-medium">{rsvp.events.name}</div>
                                 <div className="text-sm text-muted-foreground">
-                                  {reservation.events.description?.substring(0, 60)}...
+                                  {rsvp.events.description?.substring(0, 60)}...
                                 </div>
                               </div>
                             </TableCell>
@@ -275,28 +277,28 @@ const RSVPs = () => {
                               <div className="space-y-1">
                                 <div className="flex items-center space-x-2">
                                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                                  <span className="text-sm">{format(new Date(reservation.events.date_time), 'PPP')}</span>
+                                  <span className="text-sm">{format(new Date(rsvp.events.date_time), 'PPP')}</span>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   <Clock className="h-4 w-4 text-muted-foreground" />
-                                  <span className="text-sm">{format(new Date(reservation.events.date_time), 'p')}</span>
+                                  <span className="text-sm">{format(new Date(rsvp.events.date_time), 'p')}</span>
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center space-x-2">
                                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm">{reservation.events.location_name}</span>
+                                <span className="text-sm">{rsvp.events.location_name}</span>
                               </div>
                             </TableCell>
                             <TableCell>
                               <span className="text-sm">
-                                {reservation.events.profiles?.first_name} {reservation.events.profiles?.last_name}
+                                {rsvp.events.profiles?.first_name} {rsvp.events.profiles?.last_name}
                               </span>
                             </TableCell>
                             <TableCell>
-                              <Badge className={getStatusColor(reservation.reservation_status)}>
-                                {reservation.reservation_status}
+                              <Badge className={getStatusColor(rsvp.status)}>
+                                {rsvp.status}
                               </Badge>
                             </TableCell>
                             <TableCell>
@@ -304,14 +306,14 @@ const RSVPs = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => navigate(`/event/${reservation.events.id}/details`)}
+                                  onClick={() => navigate(`/event/${rsvp.events.id}/details`)}
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => cancelReservation(reservation.id, reservation.events.id)}
+                                  onClick={() => cancelRSVP(rsvp.id, rsvp.events.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
