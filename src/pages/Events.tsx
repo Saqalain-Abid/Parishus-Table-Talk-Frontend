@@ -458,6 +458,18 @@ const Events = () => {
                         </Button>
                       )}
 
+                      {/* Delete Button (only for creators in My Events) */}
+                      {showActions && isCreator && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => deleteEvent(event.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+
                       {/* RSVP Button (for all events with available spots) */}
                       {spotsLeft > 0 && (
                         <Button
