@@ -86,6 +86,7 @@ const Events = () => {
 
   const fetchEvents = async () => {
     try {
+      if (!userProfileId) return;
 
       const { data, error } = await supabase
         .from('events')
@@ -107,11 +108,16 @@ const Events = () => {
 
       if (error) throw error;
 
+      // Filter out events that the user has already RSVPed to
       const eventsWithCounts = data?.map(event => ({
         ...event,
         rsvp_count: event.rsvps?.filter(r => r.status === 'confirmed').length || 0,
         user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
-      })) || [];
+      })).filter(event => {
+        // Show only events that user has NOT RSVPed to
+        const hasRSVP = event.rsvps?.some(r => r.user_id === userProfileId && r.status === 'confirmed');
+        return !hasRSVP;
+      }) || [];
 
       setEvents(eventsWithCounts);
     } catch (error: any) {
@@ -131,7 +137,7 @@ const Events = () => {
     try {
       console.log('Fetching RSVP events for user:', user.id, 'profile:', userProfileId);
       
-      // Fetch only events user has RSVP'd to (excluding events they created)
+      // Fetch only events user has RSVP'd to (including events they created if they RSVPed)
       const { data: rsvpEvents, error: rsvpError } = await supabase
         .from('events')
         .select(`
@@ -149,7 +155,6 @@ const Events = () => {
         `)
         .eq('rsvps.user_id', userProfileId)
         .eq('rsvps.status', 'confirmed')
-        .neq('creator_id', userProfileId)
         .order('date_time', { ascending: true });
 
       if (rsvpError) {
