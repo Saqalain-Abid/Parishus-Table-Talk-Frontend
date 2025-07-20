@@ -41,45 +41,36 @@ const ExploreEvents = () => {
   const [diningStyleFilter, setDiningStyleFilter] = useState('');
   const [dietaryFilter, setDietaryFilter] = useState('');
   const [userProfileId, setUserProfileId] = useState<string | null>(null);
-  
+
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('ExploreEvents component mounted');
     initializeComponent();
   }, [user]);
 
   const initializeComponent = async () => {
     try {
-      console.log('Initializing component...');
-      
       if (user) {
-        console.log('Getting user profile...');
         const { data: profile } = await supabase
           .from('profiles')
           .select('id')
           .eq('user_id', user.id)
           .maybeSingle();
-        
-        console.log('Profile result:', profile);
+
         setUserProfileId(profile?.id || null);
       }
 
-      console.log('Fetching events...');
       await fetchEvents();
-      
-    } catch (error) {
-      console.error('Error in initialization:', error);
+    } catch {
       setLoading(false);
     }
   };
 
   const fetchEvents = async () => {
     try {
-      console.log('Starting fetchEvents');
       setLoading(true);
-      
+
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -98,12 +89,7 @@ const ExploreEvents = () => {
         .eq('status', 'active')
         .order('date_time', { ascending: true });
 
-      console.log('Events query result:', { dataLength: data?.length || 0, error });
-
-      if (error) {
-        console.error('Events query error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       const eventsWithCounts = data?.map(event => ({
         ...event,
@@ -111,10 +97,8 @@ const ExploreEvents = () => {
         user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
       })) || [];
 
-      console.log('Processed events:', eventsWithCounts.length);
       setEvents(eventsWithCounts);
-    } catch (error) {
-      console.error('Error fetching events:', error);
+    } catch {
       toast({
         title: "Error",
         description: "Failed to load events",
@@ -122,7 +106,6 @@ const ExploreEvents = () => {
       });
       setEvents([]);
     } finally {
-      console.log('Setting loading to false');
       setLoading(false);
     }
   };
@@ -141,7 +124,7 @@ const ExploreEvents = () => {
     const hasRSVP = event?.user_rsvp && event.user_rsvp.length > 0;
 
     const confirmed = window.confirm(
-      hasRSVP 
+      hasRSVP
         ? "Are you sure you want to cancel your RSVP for this event?"
         : "Are you sure you want to RSVP to this event?"
     );
@@ -150,31 +133,24 @@ const ExploreEvents = () => {
 
     try {
       if (hasRSVP) {
-        // Cancel existing RSVP
-        const { error: rsvpError } = await supabase
+        await supabase
           .from('rsvps')
           .delete()
           .eq('event_id', eventId)
           .eq('user_id', userProfileId);
 
-        if (rsvpError) throw rsvpError;
-
-        // Also remove from reservations table
-        const { error: reservationError } = await supabase
+        await supabase
           .from('reservations')
           .delete()
           .eq('event_id', eventId)
           .eq('user_id', userProfileId);
-
-        if (reservationError) console.log('No reservation found to delete');
 
         toast({
           title: "RSVP Cancelled",
           description: "You have cancelled your RSVP for this event.",
         });
       } else {
-        // Create new RSVP
-        const { error: rsvpError } = await supabase
+        await supabase
           .from('rsvps')
           .insert({
             event_id: eventId,
@@ -182,10 +158,7 @@ const ExploreEvents = () => {
             status: 'confirmed'
           });
 
-        if (rsvpError) throw rsvpError;
-
-        // Create reservation entry
-        const { error: reservationError } = await supabase
+        await supabase
           .from('reservations')
           .insert({
             event_id: eventId,
@@ -194,8 +167,6 @@ const ExploreEvents = () => {
             reservation_status: 'confirmed'
           });
 
-        if (reservationError) console.log('Failed to create reservation');
-
         toast({
           title: "RSVP Confirmed",
           description: "You have successfully RSVP'd to this event!",
@@ -203,8 +174,7 @@ const ExploreEvents = () => {
       }
 
       fetchEvents();
-    } catch (error) {
-      console.error('Error handling RSVP:', error);
+    } catch {
       toast({
         title: "Error",
         description: "Failed to update RSVP",
@@ -215,20 +185,14 @@ const ExploreEvents = () => {
 
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.location_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.location_name?.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesLocation = !locationFilter || event.location_name?.toLowerCase().includes(locationFilter.toLowerCase());
     const matchesDiningStyle = !diningStyleFilter || event.dining_style === diningStyleFilter;
     const matchesDietary = !dietaryFilter || event.dietary_theme === dietaryFilter;
-    
-    return matchesSearch && matchesLocation && matchesDiningStyle && matchesDietary;
-  });
 
-  console.log('Component render state:', { 
-    loading, 
-    eventsCount: events.length, 
-    filteredCount: filteredEvents.length 
+    return matchesSearch && matchesLocation && matchesDiningStyle && matchesDietary;
   });
 
   if (loading) {
@@ -252,7 +216,6 @@ const ExploreEvents = () => {
           <p className="text-muted-foreground">Discover dining experiences and connect with food lovers</p>
         </div>
 
-        {/* Search and Filters */}
         <div className="mb-8 space-y-4">
           <div className="flex gap-4">
             <div className="flex-1">
@@ -285,7 +248,7 @@ const ExploreEvents = () => {
               onChange={(e) => setLocationFilter(e.target.value)}
               className="max-w-xs"
             />
-            
+
             <Select value={diningStyleFilter} onValueChange={setDiningStyleFilter}>
               <SelectTrigger className="max-w-xs">
                 <SelectValue placeholder="Dining Style" />
@@ -321,7 +284,6 @@ const ExploreEvents = () => {
           </div>
         </div>
 
-        {/* Events Display */}
         {filteredEvents.length === 0 ? (
           <div className="text-center py-12">
             <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -329,8 +291,7 @@ const ExploreEvents = () => {
             <p className="text-muted-foreground mb-4">
               {searchTerm || locationFilter || diningStyleFilter || dietaryFilter
                 ? "Try adjusting your search or filters"
-                : "No events are available at the moment"
-              }
+                : "No events are available at the moment"}
             </p>
             {user && (
               <Button onClick={() => navigate('/create-event')} className="gap-2">
@@ -381,30 +342,30 @@ const ExploreEvents = () => {
                   <CardContent className="space-y-4">
                     {event.cover_photo_url && (
                       <div className="w-full h-48 bg-muted rounded-lg overflow-hidden">
-                        <img 
-                          src={event.cover_photo_url} 
+                        <img
+                          src={event.cover_photo_url}
                           alt={event.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
                     )}
-                    
+
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="w-4 h-4" />
                         <span>{eventDate.toLocaleDateString()} at {eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
-                      
+
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <MapPin className="w-4 h-4" />
                         <span>{event.location_name}</span>
                       </div>
-                      
+
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Users className="w-4 h-4" />
                         <span>{event.rsvp_count || 0} / {event.max_attendees} attending</span>
                       </div>
-                      
+
                       {event.dining_style && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Utensils className="w-4 h-4" />
