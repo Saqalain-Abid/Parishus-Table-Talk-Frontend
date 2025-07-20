@@ -443,8 +443,8 @@ const Events = () => {
                         </Button>
                       )}
 
-                      {/* RSVP Button (only for non-creators) */}
-                      {!isCreator && spotsLeft > 0 && (
+                      {/* RSVP Button (for everyone) */}
+                      {spotsLeft > 0 && (
                         <Button
                           onClick={() => handleRSVP(event.id)}
                           variant={hasRSVP ? "default" : "outline"}

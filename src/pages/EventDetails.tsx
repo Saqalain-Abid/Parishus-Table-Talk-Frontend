@@ -401,7 +401,7 @@ const EventDetails = () => {
                   <p className="text-sm text-muted-foreground">People attending</p>
                 </div>
 
-                {!isCreator && isUpcoming && spotsLeft > 0 && (
+                {isUpcoming && spotsLeft > 0 && (
                   <Button
                     onClick={handleRSVP}
                     className={`w-full ${
@@ -424,13 +424,14 @@ const EventDetails = () => {
                   </Button>
                 )}
 
-                {isCreator && (
-                  <div className="text-center">
+                {isCreator && !hasRSVP && (
+                  <div className="text-center mt-2">
                     <Badge variant="outline" className="px-3 py-1">
                       You're the host
                     </Badge>
                   </div>
                 )}
+
 
                 {spotsLeft === 0 && !isCreator && (
                   <div className="text-center">
