@@ -73,18 +73,32 @@ const Events = () => {
           .eq('user_id', user.id)
           .single();
         setUserProfileId(profile?.id || null);
+        return profile?.id || null;
       } else {
         setUserProfileId(null);
+        return null;
       }
     };
     
-    getUserProfile().then(() => {
-      fetchEvents();
-      fetchMyEvents();
+    getUserProfile().then((profileId) => {
+      if (profileId) {
+        fetchEvents(profileId);
+        fetchMyEvents(profileId);
+      }
     });
   }, [user]);
 
-  const fetchEvents = async () => {
+  useEffect(() => {
+    if (userProfileId) {
+      fetchEvents(userProfileId);
+      fetchMyEvents(userProfileId);
+    }
+  }, [activeTab, userProfileId]);
+
+  const fetchEvents = async (profileId?: string) => {
+    const currentProfileId = profileId || userProfileId;
+    if (!currentProfileId) return;
+
     try {
       const { data, error } = await supabase
         .from('events')
@@ -106,12 +120,16 @@ const Events = () => {
 
       if (error) throw error;
 
-      // Show ALL events (no filtering)
+      // Filter out events that user has already RSVPed to
       const eventsWithCounts = data?.map(event => ({
         ...event,
         rsvp_count: event.rsvps?.filter(r => r.status === 'confirmed').length || 0,
-        user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
-      })) || [];
+        user_rsvp: event.rsvps?.filter(r => r.user_id === currentProfileId) || []
+      })).filter(event => {
+        // Show only events that user has NOT RSVPed to
+        const hasRSVP = event.rsvps?.some(r => r.user_id === currentProfileId && r.status === 'confirmed');
+        return !hasRSVP;
+      }) || [];
 
       setEvents(eventsWithCounts);
     } catch (error: any) {
@@ -125,11 +143,12 @@ const Events = () => {
     }
   };
 
-  const fetchMyEvents = async () => {
-    if (!user || !userProfileId) return;
+  const fetchMyEvents = async (profileId?: string) => {
+    const currentProfileId = profileId || userProfileId;
+    if (!user || !currentProfileId) return;
 
     try {
-      console.log('Fetching RSVP events for user:', user.id, 'profile:', userProfileId);
+      console.log('Fetching RSVP events for user:', user.id, 'profile:', currentProfileId);
       
       // Fetch only events user has RSVP'd to (including events they created if they RSVPed)
       const { data: rsvpEvents, error: rsvpError } = await supabase
@@ -147,7 +166,7 @@ const Events = () => {
             user_id
           )
         `)
-        .eq('rsvps.user_id', userProfileId)
+        .eq('rsvps.user_id', currentProfileId)
         .eq('rsvps.status', 'confirmed')
         .order('date_time', { ascending: true });
 
@@ -161,7 +180,7 @@ const Events = () => {
       const eventsWithCounts = (rsvpEvents || []).map(event => ({
         ...event,
         rsvp_count: event.rsvps?.filter(r => r.status === 'confirmed').length || 0,
-        user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
+        user_rsvp: event.rsvps?.filter(r => r.user_id === currentProfileId) || []
       }));
 
       setMyEvents(eventsWithCounts);
@@ -416,8 +435,8 @@ const Events = () => {
                         <Eye className="h-3 w-3" />
                       </Button>
 
-                      {/* Edit Button (only for creators) */}
-                      {isCreator ? (
+                      {/* Edit Button (only for creators in Discover Events) */}
+                      {!showActions && isCreator && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -425,25 +444,22 @@ const Events = () => {
                         >
                           <Edit className="h-3 w-3" />
                         </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
+                      )}
+
+                      {/* Delete Button (only for creators in Discover Events) */}
+                      {!showActions && isCreator && (
+                        <Button 
+                          variant="outline" 
                           size="sm"
-                          onClick={() => {
-                            toast({
-                              title: "Cannot edit event",
-                              description: "Sorry, you did not create this event, so you cannot edit it.",
-                              variant: "destructive"
-                            });
-                          }}
-                          className="opacity-50"
+                          onClick={() => deleteEvent(event.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
-                          <Edit className="h-3 w-3" />
+                          <Trash2 className="h-3 w-3" />
                         </Button>
                       )}
 
-                      {/* RSVP Button (only for events not created by user) */}
-                      {!isCreator && spotsLeft > 0 && (
+                      {/* RSVP Button (for all events with available spots) */}
+                      {spotsLeft > 0 && (
                         <Button
                           onClick={() => handleRSVP(event.id)}
                           variant={hasRSVP ? "default" : "outline"}
