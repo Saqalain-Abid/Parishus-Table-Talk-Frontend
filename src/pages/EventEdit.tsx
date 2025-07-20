@@ -65,20 +65,14 @@ const EventEdit = () => {
       if (error) throw error;
 
       // Check if user is the creator
-      if (data.creator_id !== userProfileId) {
+      if (data.creator_id === userProfileId) {
         toast({
           title: "Access Denied",
           description: "You can only edit events you created",
           variant: "destructive",
         });
-        const currentPath = window.location.pathname;
-  if (currentPath === '/explore') {
-    navigate('/explore');
-    return;
-  } else {
-    navigate('/events');
-    return;
-  }
+        navigate('/events');
+        return;
       }
 
       // Populate form with existing data
