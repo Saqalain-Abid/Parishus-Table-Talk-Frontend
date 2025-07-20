@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, Clock, Users, Search, Filter, Calendar, Utensils } from 'lucide-react';
+import { MapPin, Clock, Users, Search, Calendar, Utensils } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 interface Event {
   id: string;
@@ -44,54 +44,42 @@ const ExploreEvents = () => {
   
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
-    console.log('🔍 ExploreEvents component mounted!', { user: !!user });
-    
-    // Always proceed, even if no user is present
-    // This allows admins or logged-out users to see public events
-
-    const initializeComponent = async () => {
-      try {
-        if (user) {
-          console.log('👤 Getting user profile...');
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle();
-          
-          console.log('👤 Profile result:', { profile, profileError });
-          
-          if (profileError) {
-            console.error('❌ Profile error:', profileError);
-            setUserProfileId(null);
-          } else {
-            setUserProfileId(profile?.id || null);
-            console.log('✅ User profile ID set:', profile?.id);
-          }
-        } else {
-          console.log('👤 No user, skipping profile fetch');
-          setUserProfileId(null);
-        }
-
-        console.log('📅 Now fetching events...');
-        await fetchEvents();
-        
-      } catch (error) {
-        console.error('❌ Error in initialization:', error);
-        setLoading(false);
-      }
-    };
-    
+    console.log('ExploreEvents component mounted');
     initializeComponent();
   }, [user]);
 
-  const fetchEvents = async () => {
-    console.log('📅 fetchEvents called');
+  const initializeComponent = async () => {
     try {
+      console.log('Initializing component...');
+      
+      if (user) {
+        console.log('Getting user profile...');
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        console.log('Profile result:', profile);
+        setUserProfileId(profile?.id || null);
+      }
+
+      console.log('Fetching events...');
+      await fetchEvents();
+      
+    } catch (error) {
+      console.error('Error in initialization:', error);
+      setLoading(false);
+    }
+  };
+
+  const fetchEvents = async () => {
+    try {
+      console.log('Starting fetchEvents');
       setLoading(true);
+      
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -110,10 +98,10 @@ const ExploreEvents = () => {
         .eq('status', 'active')
         .order('date_time', { ascending: true });
 
-      console.log('📅 Events query result:', { data: data?.length || 0, error });
+      console.log('Events query result:', { dataLength: data?.length || 0, error });
 
       if (error) {
-        console.error('❌ Events query error:', error);
+        console.error('Events query error:', error);
         throw error;
       }
 
@@ -123,18 +111,18 @@ const ExploreEvents = () => {
         user_rsvp: event.rsvps?.filter(r => r.user_id === userProfileId) || []
       })) || [];
 
-      console.log('📅 Events with counts:', eventsWithCounts?.length || 0);
+      console.log('Processed events:', eventsWithCounts.length);
       setEvents(eventsWithCounts);
     } catch (error) {
-      console.error('❌ Error fetching events:', error);
+      console.error('Error fetching events:', error);
       toast({
         title: "Error",
         description: "Failed to load events",
         variant: "destructive",
       });
-      setEvents([]); // Set empty array on error
+      setEvents([]);
     } finally {
-      console.log('📅 Setting loading to false');
+      console.log('Setting loading to false');
       setLoading(false);
     }
   };
@@ -176,7 +164,7 @@ const ExploreEvents = () => {
           .from('reservations')
           .delete()
           .eq('event_id', eventId)
-          .eq('user_id', user.id);
+          .eq('user_id', userProfileId);
 
         if (reservationError) console.log('No reservation found to delete');
 
@@ -201,16 +189,16 @@ const ExploreEvents = () => {
           .from('reservations')
           .insert({
             event_id: eventId,
-            user_id: user.id,
+            user_id: userProfileId,
             reservation_type: 'standard',
-            reservation_status: 'pending'
+            reservation_status: 'confirmed'
           });
 
-        if (reservationError) throw reservationError;
+        if (reservationError) console.log('Failed to create reservation');
 
         toast({
           title: "RSVP Confirmed",
-          description: "You have successfully RSVP'd to this event! Your reservation is pending confirmation.",
+          description: "You have successfully RSVP'd to this event!",
         });
       }
 
@@ -237,139 +225,15 @@ const ExploreEvents = () => {
     return matchesSearch && matchesLocation && matchesDiningStyle && matchesDietary;
   });
 
-  const EventCard = ({ event }: { event: Event }) => {
-    const hasRSVP = event.user_rsvp && event.user_rsvp.length > 0;
-    const isCreator = event.creator_id === userProfileId;
-    const spotsLeft = event.max_attendees - (event.rsvp_count || 0);
-    const eventDate = new Date(event.date_time);
-    const isUpcoming = eventDate > new Date();
-
-    return (
-      <Card className="shadow-card border-border hover:shadow-glow transition-shadow">
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={event.profiles?.profile_photo_url} />
-                <AvatarFallback>
-                  {event.profiles?.first_name?.[0]}{event.profiles?.last_name?.[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <CardTitle className="text-lg">{event.name}</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  by {event.profiles?.first_name} {event.profiles?.last_name}
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-1">
-              <Badge variant={isUpcoming ? "default" : "secondary"}>
-                {isUpcoming ? 'Upcoming' : 'Past'}
-              </Badge>
-              {spotsLeft > 0 && (
-                <Badge variant="outline" className="text-xs">
-                  {spotsLeft} spots left
-                </Badge>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {event.cover_photo_url && (
-            <div className="w-full h-48 bg-muted rounded-lg overflow-hidden">
-              <img 
-                src={event.cover_photo_url} 
-                alt={event.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-          
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock className="w-4 h-4" />
-              <span>{eventDate.toLocaleDateString()} at {eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            </div>
-            
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="w-4 h-4" />
-              <span>{event.location_name}</span>
-            </div>
-            
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="w-4 h-4" />
-              <span>{event.rsvp_count || 0} / {event.max_attendees} attending</span>
-            </div>
-            
-            {event.dining_style && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Utensils className="w-4 h-4" />
-                <span>{event.dining_style.replace('_', ' ')}</span>
-              </div>
-            )}
-          </div>
-
-          {event.description && (
-            <p className="text-sm text-muted-foreground">
-              {event.description.length > 150 ? event.description.substring(0, 150) + '...' : event.description}
-            </p>
-          )}
-
-          {event.tags && event.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {event.tags.map((tag, index) => (
-                <Badge key={index} variant="secondary" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          <div className="flex gap-2 pt-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => navigate(`/event/${event.id}/details`)}
-            >
-              Details
-            </Button>
-            {!isCreator && isUpcoming && spotsLeft > 0 && (
-              <Button
-                onClick={() => handleRSVP(event.id)}
-                variant={hasRSVP ? "outline" : "default"}
-                className="flex-1"
-              >
-                {hasRSVP ? 'Cancel RSVP' : 'RSVP'}
-              </Button>
-            )}
-            {isCreator && (
-              <Badge variant="outline" className="px-3 py-1">
-                Your Event
-              </Badge>
-            )}
-            {spotsLeft === 0 && !isCreator && (
-              <Badge variant="secondary" className="px-3 py-1">
-                Event Full
-              </Badge>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  console.log('Component render:', { 
+  console.log('Component render state:', { 
     loading, 
-    events: events?.length || 0, 
-    filteredEvents: filteredEvents?.length || 0,
-    userProfileId,
-    user: !!user 
+    eventsCount: events.length, 
+    filteredCount: filteredEvents.length 
   });
 
   if (loading) {
-    console.log('Still loading...');
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background text-foreground">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
@@ -380,10 +244,8 @@ const ExploreEvents = () => {
     );
   }
 
-  console.log('📋 About to render:', { eventsLength: events.length, filteredLength: filteredEvents.length });
-  
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2 text-foreground">Explore Events</h1>
@@ -459,7 +321,7 @@ const ExploreEvents = () => {
           </div>
         </div>
 
-        {/* Events Grid */}
+        {/* Events Display */}
         {filteredEvents.length === 0 ? (
           <div className="text-center py-12">
             <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -479,9 +341,126 @@ const ExploreEvents = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
+            {filteredEvents.map((event) => {
+              const hasRSVP = event.user_rsvp && event.user_rsvp.length > 0;
+              const isCreator = event.creator_id === userProfileId;
+              const spotsLeft = event.max_attendees - (event.rsvp_count || 0);
+              const eventDate = new Date(event.date_time);
+              const isUpcoming = eventDate > new Date();
+
+              return (
+                <Card key={event.id} className="shadow-card border-border hover:shadow-glow transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-10 h-10">
+                          <AvatarImage src={event.profiles?.profile_photo_url} />
+                          <AvatarFallback>
+                            {event.profiles?.first_name?.[0]}{event.profiles?.last_name?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <CardTitle className="text-lg text-foreground">{event.name}</CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            by {event.profiles?.first_name} {event.profiles?.last_name}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge variant={isUpcoming ? "default" : "secondary"}>
+                          {isUpcoming ? 'Upcoming' : 'Past'}
+                        </Badge>
+                        {spotsLeft > 0 && (
+                          <Badge variant="outline" className="text-xs">
+                            {spotsLeft} spots left
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {event.cover_photo_url && (
+                      <div className="w-full h-48 bg-muted rounded-lg overflow-hidden">
+                        <img 
+                          src={event.cover_photo_url} 
+                          alt={event.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="w-4 h-4" />
+                        <span>{eventDate.toLocaleDateString()} at {eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="w-4 h-4" />
+                        <span>{event.location_name}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Users className="w-4 h-4" />
+                        <span>{event.rsvp_count || 0} / {event.max_attendees} attending</span>
+                      </div>
+                      
+                      {event.dining_style && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Utensils className="w-4 h-4" />
+                          <span>{event.dining_style.replace('_', ' ')}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {event.description && (
+                      <p className="text-sm text-muted-foreground">
+                        {event.description.length > 150 ? event.description.substring(0, 150) + '...' : event.description}
+                      </p>
+                    )}
+
+                    {event.tags && event.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {event.tags.map((tag, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => navigate(`/event/${event.id}/details`)}
+                      >
+                        Details
+                      </Button>
+                      {!isCreator && isUpcoming && spotsLeft > 0 && (
+                        <Button
+                          onClick={() => handleRSVP(event.id)}
+                          variant={hasRSVP ? "outline" : "default"}
+                          className="flex-1"
+                        >
+                          {hasRSVP ? 'Cancel RSVP' : 'RSVP'}
+                        </Button>
+                      )}
+                      {isCreator && (
+                        <Badge variant="outline" className="px-3 py-1">
+                          Your Event
+                        </Badge>
+                      )}
+                      {spotsLeft === 0 && !isCreator && (
+                        <Badge variant="secondary" className="px-3 py-1">
+                          Event Full
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
