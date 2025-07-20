@@ -71,8 +71,14 @@ const EventEdit = () => {
           description: "You can only edit events you created",
           variant: "destructive",
         });
-        navigate('/events');
-        return;
+        const currentPath = window.location.pathname;
+  if (currentPath === '/explore') {
+    navigate('/explore');
+    return;
+  } else {
+    navigate('/events');
+    return;
+  }
       }
 
       // Populate form with existing data
