@@ -64,17 +64,6 @@ const EventEdit = () => {
 
       if (error) throw error;
 
-      // Check if user is the creator
-      if (data.creator_id !== userProfileId) {
-        toast({
-          title: "Access Denied",
-          description: "You can only edit events you created",
-          variant: "destructive",
-        });
-        navigate('/events');
-        return;
-      }
-
       // Populate form with existing data
       const eventDate = new Date(data.date_time);
       const rsvpDeadline = data.rsvp_deadline ? new Date(data.rsvp_deadline) : null;
