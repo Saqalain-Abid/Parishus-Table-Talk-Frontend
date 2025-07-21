@@ -18,6 +18,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminCreateEvent from "./pages/admin/AdminCreateEvent";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminCrossedPaths from "./pages/admin/AdminCrossedPaths";
 import AdminRSVPs from "./pages/admin/AdminRSVPs";
 import AdminReservations from "./pages/admin/AdminReservations";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
@@ -158,6 +159,13 @@ const App = () => (
                 <ProtectedAdminRoute>
                   <AdminLayout>
                     <AdminUsers />
+                  </AdminLayout>
+                </ProtectedAdminRoute>
+              } />
+              <Route path="/admin/crossed-paths" element={
+                <ProtectedAdminRoute>
+                  <AdminLayout>
+                    <AdminCrossedPaths />
                   </AdminLayout>
                 </ProtectedAdminRoute>
               } />

@@ -42,6 +42,7 @@ const AdminSidebar = () => {
       { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
       { title: "Events", url: "/admin/events", icon: Calendar },
       { title: "Users", url: "/admin/users", icon: Users },
+      { title: "Crossed Paths", url: "/admin/crossed-paths", icon: Users },
       { title: "RSVPs", url: "/admin/rsvps", icon: UserCheck },
       { title: "Reservations", url: "/admin/reservations", icon: Calendar },
       { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
