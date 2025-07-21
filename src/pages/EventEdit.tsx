@@ -65,7 +65,7 @@ const EventEdit = () => {
       if (error) throw error;
 
       // Check if user is the creator
-      if (data.creator_id === userProfileId) {
+      if (data.creator_id !== userProfileId) {
         toast({
           title: "Access Denied",
           description: "You can only edit events you created",
