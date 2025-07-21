@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,15 +32,14 @@ const CrossedPaths = () => {
   const { user } = useAuth();
   const { profile } = useProfile();
 
-  useEffect(() => {
+   useEffect(() => {
     if (profile) {
       generateCrossedPaths().then(() => {
         fetchCrossedPaths();
       });
     }
   }, [profile]);
-
-  const generateCrossedPaths = async () => {
+const generateCrossedPaths = async () => {
     const { data: rsvps } = await supabase
       .from('rsvps')
       .select('event_id')
@@ -83,8 +82,9 @@ const CrossedPaths = () => {
       }
     }
   };
-
   const fetchCrossedPaths = async () => {
+    if (!profile) return;
+
     try {
       const { data, error } = await supabase
         .from('crossed_paths')
@@ -97,13 +97,20 @@ const CrossedPaths = () => {
         .eq('is_active', true)
         .order('matched_at', { ascending: false });
 
+      if (error) {
+        console.error('Error fetching crossed paths:', error);
+        setCrossedPaths([]);
+        return;
+      }
+
       const formattedPaths = data?.map((path: any) => ({
         ...path,
         matched_user: path.user1_id === profile.id ? path.user2 : path.user1
       })) || [];
 
       setCrossedPaths(formattedPaths);
-    } catch {
+    } catch (error: any) {
+      console.error('Error in fetchCrossedPaths:', error);
       setCrossedPaths([]);
       toast({
         title: "Error",
@@ -116,6 +123,8 @@ const CrossedPaths = () => {
   };
 
   const createPrivateEvent = async (matchedUserId: string) => {
+    if (!profile) return;
+
     try {
       const { data, error } = await supabase
         .from('events')
@@ -123,7 +132,7 @@ const CrossedPaths = () => {
           creator_id: profile.id,
           name: "Private Dinner Invitation",
           description: "A private dinner between crossed paths",
-          date_time: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          date_time: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Next week
           location_name: "TBD",
           max_attendees: 2,
           tags: ['private', 'crossed-paths'],
@@ -132,6 +141,9 @@ const CrossedPaths = () => {
         .select()
         .single();
 
+      if (error) throw error;
+
+      // Auto-RSVP both users
       await supabase.from('rsvps').insert([
         { event_id: data.id, user_id: profile.id, status: 'confirmed' },
         { event_id: data.id, user_id: matchedUserId, status: 'confirmed' }
@@ -139,9 +151,9 @@ const CrossedPaths = () => {
 
       toast({
         title: "Private event created!",
-        description: "Your private dinner invitation has been sent."
+        description: "Your private dinner invitation has been sent.",
       });
-    } catch {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Failed to create private event",
