@@ -17,7 +17,8 @@ import {
   Settings,
   Heart,
   Star,
-  CreditCard
+  CreditCard,
+  MessageSquare
 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
@@ -39,6 +40,7 @@ const Navigation = () => {
     { icon: Calendar, label: 'My Events', path: '/events' },
     { icon: Search, label: 'Explore', path: '/explore' },
     { icon: Heart, label: 'RSVPs', path: '/rsvps' },
+    { icon: MessageSquare, label: 'Feedback', path: '/feedback' },
     { icon: Star, label: 'Crossed Paths', path: '/crossed-paths' },
     { icon: CreditCard, label: 'Subscription', path: '/subscription' },
   ];

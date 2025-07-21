@@ -15,7 +15,8 @@ import {
   Heart,
   UserCheck,
   Edit,
-  Share2
+  Share2,
+  Star
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -61,6 +62,7 @@ const EventDetails = () => {
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfileId, setUserProfileId] = useState<string | null>(null);
+  const [eventReviews, setEventReviews] = useState<any[]>([]);
 
   useEffect(() => {
     const getUserProfile = async () => {
@@ -77,6 +79,7 @@ const EventDetails = () => {
     getUserProfile().then(() => {
       if (eventId) {
         fetchEvent();
+        fetchEventReviews();
       }
     });
   }, [eventId, user]);
@@ -121,6 +124,34 @@ const EventDetails = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchEventReviews = async () => {
+    if (!eventId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('feedback')
+        .select(`
+          id,
+          rating,
+          comment,
+          created_at,
+          profiles:user_id (
+            first_name,
+            last_name,
+            profile_photo_url
+          )
+        `)
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setEventReviews(data || []);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+      setEventReviews([]);
     }
   };
 
@@ -386,6 +417,95 @@ const EventDetails = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Reviews Section */}
+            {eventReviews.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Star className="h-5 w-5" />
+                    <span>Reviews ({eventReviews.length})</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {/* Average Rating */}
+                    {eventReviews.length > 0 && (
+                      <div className="flex items-center space-x-4 p-4 bg-muted/50 rounded-lg">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">
+                            {(eventReviews.reduce((sum, review) => sum + review.rating, 0) / eventReviews.length).toFixed(1)}
+                          </div>
+                          <div className="flex items-center justify-center mt-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`h-4 w-4 ${
+                                  star <= Math.round(eventReviews.reduce((sum, review) => sum + review.rating, 0) / eventReviews.length)
+                                    ? 'text-peach-gold fill-current'
+                                    : 'text-muted-foreground'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">
+                            Based on {eventReviews.length} review{eventReviews.length !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Individual Reviews */}
+                    {eventReviews.slice(0, 3).map((review) => (
+                      <div key={review.id} className="space-y-2">
+                        <div className="flex items-start space-x-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={review.profiles?.profile_photo_url} />
+                            <AvatarFallback>
+                              {review.profiles?.first_name?.[0] || 'U'}
+                              {review.profiles?.last_name?.[0] || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">
+                                {review.profiles?.first_name || 'Anonymous'} {review.profiles?.last_name || 'User'}
+                              </span>
+                              <div className="flex items-center space-x-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`h-3 w-3 ${
+                                      star <= review.rating
+                                        ? 'text-peach-gold fill-current'
+                                        : 'text-muted-foreground'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            {review.comment && (
+                              <p className="text-sm text-muted-foreground">{review.comment}</p>
+                            )}
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(review.created_at), 'MMM d, yyyy')}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {eventReviews.length > 3 && (
+                      <p className="text-sm text-muted-foreground text-center">
+                        And {eventReviews.length - 3} more review{eventReviews.length - 3 !== 1 ? 's' : ''}...
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -441,7 +561,22 @@ const EventDetails = () => {
                   </div>
                 )}
 
-                {!isUpcoming && (
+                {!isUpcoming && hasRSVP && (
+                  <div className="space-y-2">
+                    <Badge variant="secondary" className="px-3 py-1 w-full justify-center">
+                      Event Ended
+                    </Badge>
+                    <Button
+                      onClick={() => navigate('/feedback')}
+                      className="w-full bg-peach-gold hover:bg-peach-gold/90"
+                    >
+                      <Star className="h-4 w-4 mr-2" />
+                      Leave Review
+                    </Button>
+                  </div>
+                )}
+
+                {!isUpcoming && !hasRSVP && (
                   <div className="text-center">
                     <Badge variant="secondary" className="px-3 py-1">
                       Event Ended
