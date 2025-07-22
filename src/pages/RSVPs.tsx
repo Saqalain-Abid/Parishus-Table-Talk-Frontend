@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Calendar,
   Clock,
@@ -244,88 +244,105 @@ const RSVPs = () => {
                 </Card>
               </div>
 
-              {/* Reservations Table */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your RSVPs</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="border rounded-lg">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Event</TableHead>
-                          <TableHead>Date & Time</TableHead>
-                          <TableHead>Location</TableHead>
-                          <TableHead>Host</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {rsvps.map((rsvp) => (
-                          <TableRow key={rsvp.id}>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium">{rsvp.events.name}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  {rsvp.events.description?.substring(0, 60)}...
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-1">
-                                <div className="flex items-center space-x-2">
-                                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                                  <span className="text-sm">{format(new Date(rsvp.events.date_time), 'PPP')}</span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Clock className="h-4 w-4 text-muted-foreground" />
-                                  <span className="text-sm">{format(new Date(rsvp.events.date_time), 'p')}</span>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm">{rsvp.events.location_name}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-sm">
-                                {rsvp.events.profiles?.first_name} {rsvp.events.profiles?.last_name}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={getStatusColor(rsvp.status)}>
-                                {rsvp.status}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex space-x-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => navigate(`/event/${rsvp.events.id}/details`)}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => cancelRSVP(rsvp.id, rsvp.events.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* RSVPs Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {rsvps.map((rsvp) => {
+                  const eventDate = new Date(rsvp.events.date_time);
+                  const isUpcoming = eventDate > new Date();
+                  
+                  return (
+                    <Card key={rsvp.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                      {/* Event Image */}
+                      {rsvp.events.cover_photo_url && (
+                        <div className="h-48 overflow-hidden">
+                          <img 
+                            src={rsvp.events.cover_photo_url} 
+                            alt={rsvp.events.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <CardTitle className="text-lg leading-tight">{rsvp.events.name}</CardTitle>
+                          <div className="flex gap-1 ml-2">
+                            <Badge variant={isUpcoming ? "default" : "secondary"} className="text-xs">
+                              {isUpcoming ? 'Upcoming' : 'Past'}
+                            </Badge>
+                            <Badge className={`text-xs ${getStatusColor(rsvp.status)}`}>
+                              {rsvp.status}
+                            </Badge>
+                          </div>
+                        </div>
+                        
+                        <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
+                          {rsvp.events.description}
+                        </p>
+                      </CardHeader>
+
+                      <CardContent className="pt-0 space-y-4">
+                        {/* Date & Time */}
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{format(eventDate, 'PPP')}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{format(eventDate, 'p')}</span>
+                          </div>
+                        </div>
+
+                        {/* Location */}
+                        <div className="flex items-center space-x-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm truncate">{rsvp.events.location_name}</span>
+                        </div>
+
+                        {/* Host */}
+                        <div className="flex items-center space-x-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarFallback className="text-xs">
+                              {rsvp.events.profiles?.first_name?.[0] || 'H'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm truncate">
+                            {rsvp.events.profiles?.first_name} {rsvp.events.profiles?.last_name}
+                          </span>
+                        </div>
+
+                        {/* RSVP Date */}
+                        <div className="text-xs text-muted-foreground">
+                          RSVP'd on {format(new Date(rsvp.created_at), 'PPP')}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/event/${rsvp.events.id}/details`)}
+                            className="flex-1"
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Event
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => cancelRSVP(rsvp.id, rsvp.events.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
