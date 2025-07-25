@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, Clock, MapPin, Upload, Plus, X, Users } from 'lucide-react';
+import { Calendar, Clock, MapPin, Upload, Plus, X, Users, Loader2, Image as ImageIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -105,7 +105,7 @@ const CreateEvent = () => {
     setLoading(true);
     try {
       const dateTime = new Date(`${formData.date}T${formData.time}`);
-      const rsvpDeadline = formData.rsvp_deadline_date && formData.rsvp_deadline_time 
+      const rsvpDeadline = formData.rsvp_deadline_date && formData.rsvp_deadline_time
         ? new Date(`${formData.rsvp_deadline_date}T${formData.rsvp_deadline_time}`)
         : null;
       const { data, error } = await supabase
@@ -137,14 +137,7 @@ const CreateEvent = () => {
           user_id: profile.id,
           status: 'confirmed'
         });
-      if (rsvpError) {
-        toast({
-          title: 'RSVP Error',
-          description: rsvpError.message,
-          variant: 'destructive'
-        });
-        return false;
-      }
+      if (rsvpError) throw rsvpError;
 
       const { error: reservationError } = await supabase
         .from('reservations')
@@ -154,14 +147,7 @@ const CreateEvent = () => {
           reservation_type: 'standard',
           reservation_status: 'confirmed'
         });
-      if (reservationError) {
-        toast({
-          title: 'Reservation Error',
-          description: reservationError.message,
-          variant: 'destructive'
-        });
-        return false;
-      }
+      if (reservationError) throw reservationError;
 
       toast({
         title: "Event created!",
@@ -179,52 +165,56 @@ const CreateEvent = () => {
     }
   };
 
-  const isFormValid = formData.name && formData.description && formData.date && 
-                      formData.time && formData.location_name;
+  const isFormValid = formData.name && formData.description && formData.date &&
+    formData.time && formData.location_name;
 
   return (
-   <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
-          <div>
+          <div className="space-y-2">
             <h1 className="text-3xl font-bold text-foreground">Create New Event</h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground">
               Plan your next dining experience and invite others to join
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            <Card className="shadow-card border-border">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Event Details Card */}
+            <Card className="border-border">
               <CardHeader>
-                <CardTitle>Event Details</CardTitle>
+                <CardTitle className="text-lg font-semibold">Event Details</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Event Name *</Label>
+                  <Label htmlFor="name" className="text-sm font-medium">Event Name *</Label>
                   <Input
                     id="name"
                     placeholder="e.g., Wine Tasting Social"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
+                    className="bg-slate-100 text-gray-800"
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description *</Label>
+                  <Label htmlFor="description" className="text-sm font-medium">Description *</Label>
                   <Textarea
                     id="description"
                     placeholder="Describe your event, what to expect, dress code, etc."
                     value={formData.description}
                     onChange={(e) => handleInputChange('description', e.target.value)}
                     rows={4}
+                    className="bg-slate-100 text-gray-800"
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Date Input */}
                   <div className="space-y-2">
-                    <Label htmlFor="date">Date *</Label>
+                    <Label htmlFor="date" className="text-sm font-medium">Date *</Label>
                     <div className="relative">
                       <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -232,14 +222,15 @@ const CreateEvent = () => {
                         type="date"
                         value={formData.date}
                         onChange={(e) => handleInputChange('date', e.target.value)}
-                        className="pl-10"
+                        className="pl-10 focus-visible:ring-primary"
                         required
                       />
                     </div>
                   </div>
 
+                  {/* Time Input */}
                   <div className="space-y-2">
-                    <Label htmlFor="time">Time *</Label>
+                    <Label htmlFor="time" className="text-sm font-medium">Time *</Label>
                     <div className="relative">
                       <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -247,7 +238,7 @@ const CreateEvent = () => {
                         type="time"
                         value={formData.time}
                         onChange={(e) => handleInputChange('time', e.target.value)}
-                        className="pl-10"
+                        className="pl-10 focus-visible:ring-primary [&::-webkit-calendar-picker-indicator]:hidden"
                         required
                       />
                     </div>
@@ -256,7 +247,7 @@ const CreateEvent = () => {
 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="location_name">Venue Name *</Label>
+                    <Label htmlFor="location_name" className="text-sm font-medium">Venue Name *</Label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -264,26 +255,27 @@ const CreateEvent = () => {
                         placeholder="e.g., The Garden Cafe"
                         value={formData.location_name}
                         onChange={(e) => handleInputChange('location_name', e.target.value)}
-                        className="pl-10"
+                        className="pl-10 focus-visible:ring-primary"
                         required
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="location_address">Address</Label>
+                    <Label htmlFor="location_address" className="text-sm font-medium">Address</Label>
                     <Input
                       id="location_address"
                       placeholder="123 Main St, City, State"
                       value={formData.location_address}
                       onChange={(e) => handleInputChange('location_address', e.target.value)}
+                      className="focus-visible:ring-primary"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="max_attendees">Maximum Attendees *</Label>
+                    <Label htmlFor="max_attendees" className="text-sm font-medium">Maximum Attendees *</Label>
                     <Input
                       id="max_attendees"
                       type="number"
@@ -291,57 +283,79 @@ const CreateEvent = () => {
                       max="50"
                       value={formData.max_attendees}
                       onChange={(e) => handleInputChange('max_attendees', parseInt(e.target.value))}
+                      className="focus-visible:ring-primary"
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="rsvp_deadline_date">RSVP Deadline Date</Label>
+                    <Label htmlFor="rsvp_deadline_date" className="text-sm font-medium">RSVP Deadline Date</Label>
                     <Input
                       id="rsvp_deadline_date"
                       type="date"
                       value={formData.rsvp_deadline_date}
                       onChange={(e) => handleInputChange('rsvp_deadline_date', e.target.value)}
+                      className="focus-visible:ring-primary [&::-webkit-calendar-picker-indicator]:hidden"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="rsvp_deadline_time" className="text-sm font-medium">RSVP Deadline Time</Label>
+                    <Input
+                      id="rsvp_deadline_time"
+                      type="time"
+                      value={formData.rsvp_deadline_time}
+                      onChange={(e) => handleInputChange('rsvp_deadline_time', e.target.value)}
+                      className="focus-visible:ring-primary [&::-webkit-calendar-picker-indicator]:hidden"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="rsvp_deadline_time">RSVP Deadline Time</Label>
-                  <Input
-                    id="rsvp_deadline_time"
-                    type="time"
-                    value={formData.rsvp_deadline_time}
-                    onChange={(e) => handleInputChange('rsvp_deadline_time', e.target.value)}
-                  />
+                  <Label htmlFor="rsvp_deadline_date" className="text-sm font-medium">RSVP Deadline Date</Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="rsvp_deadline_date"
+                      type="date"
+                      value={formData.rsvp_deadline_date}
+                      onChange={(e) => handleInputChange('rsvp_deadline_date', e.target.value)}
+                      className="pl-10 focus-visible:ring-primary [&::-webkit-calendar-picker-indicator]:hidden"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="shadow-card border-border">
+            {/* Event Photo Card */}
+            <Card className="border-border">
               <CardHeader>
-                <CardTitle>Event Photo</CardTitle>
+                <CardTitle className="text-lg font-semibold">Event Photo</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {formData.cover_photo_url && (
-                  <div className="relative">
+                {formData.cover_photo_url ? (
+                  <div className="relative group">
                     <img
                       src={formData.cover_photo_url}
                       alt="Event cover"
-                      className="w-full h-48 object-cover rounded-lg"
+                      className="w-full h-48 object-cover rounded-lg border"
                     />
                     <Button
                       type="button"
                       variant="destructive"
                       size="sm"
-                      className="absolute top-2 right-2"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => handleInputChange('cover_photo_url', '')}
                     >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
+                ) : (
+                  <div className="flex items-center justify-center h-48 bg-muted rounded-lg border border-dashed">
+                    <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                  </div>
                 )}
-                
+
                 <input
                   type="file"
                   accept="image/*"
@@ -350,36 +364,34 @@ const CreateEvent = () => {
                   id="photo-upload"
                   disabled={uploading}
                 />
-                
+
                 <label htmlFor="photo-upload">
                   <Button
                     type="button"
                     variant="outline"
                     disabled={uploading}
-                    className="w-full cursor-pointer"
-                    asChild
+                    className="w-full mt-6 cursor-pointer"
                   >
-                    <span>
-                      {uploading ? (
-                        <>
-                          <Upload className="h-4 w-4 mr-2 animate-spin" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-4 w-4 mr-2" />
-                          {formData.cover_photo_url ? 'Change Photo' : 'Upload Cover Photo'}
-                        </>
-                      )}
-                    </span>
+                    {uploading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        {formData.cover_photo_url ? 'Change Photo' : 'Upload Cover Photo'}
+                      </>
+                    )}
                   </Button>
                 </label>
               </CardContent>
             </Card>
 
-            <Card className="shadow-card border-border">
+            {/* Event Preferences Card */}
+            <Card className="border-border">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
+                <CardTitle className="text-lg font-semibold flex items-center space-x-2">
                   <Users className="h-5 w-5" />
                   <span>Event Preferences</span>
                 </CardTitle>
@@ -387,9 +399,12 @@ const CreateEvent = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="dining_style">Dining Style</Label>
-                    <Select value={formData.dining_style} onValueChange={(value) => handleInputChange('dining_style', value)}>
-                      <SelectTrigger>
+                    <Label htmlFor="dining_style" className="text-sm font-medium">Dining Style</Label>
+                    <Select
+                      value={formData.dining_style}
+                      onValueChange={(value) => handleInputChange('dining_style', value)}
+                    >
+                      <SelectTrigger className="focus-visible:ring-primary">
                         <SelectValue placeholder="Select dining style" />
                       </SelectTrigger>
                       <SelectContent>
@@ -403,9 +418,12 @@ const CreateEvent = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="dietary_theme">Dietary Preferences</Label>
-                    <Select value={formData.dietary_theme} onValueChange={(value) => handleInputChange('dietary_theme', value)}>
-                      <SelectTrigger>
+                    <Label htmlFor="dietary_theme" className="text-sm font-medium">Dietary Preferences</Label>
+                    <Select
+                      value={formData.dietary_theme}
+                      onValueChange={(value) => handleInputChange('dietary_theme', value)}
+                    >
+                      <SelectTrigger className="focus-visible:ring-primary">
                         <SelectValue placeholder="Select dietary preferences" />
                       </SelectTrigger>
                       <SelectContent>
@@ -425,9 +443,10 @@ const CreateEvent = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-card border-border">
+            {/* Tags Card */}
+            <Card className="border-border">
               <CardHeader>
-                <CardTitle>Tags</CardTitle>
+                <CardTitle className="text-lg font-semibold">Tags</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex space-x-2">
@@ -436,19 +455,25 @@ const CreateEvent = () => {
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                    className="focus-visible:ring-primary"
                   />
-                  <Button type="button" onClick={addTag} variant="outline">
+                  <Button
+                    type="button"
+                    onClick={addTag}
+                    variant="outline"
+                    disabled={!newTag.trim()}
+                  >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-                
+
                 {formData.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {formData.tags.map((tag) => (
                       <Badge
                         key={tag}
                         variant="secondary"
-                        className="cursor-pointer hover:bg-destructive/20"
+                        className="cursor-pointer hover:bg-destructive/20 transition-colors"
                         onClick={() => removeTag(tag)}
                       >
                         {tag}
@@ -460,20 +485,29 @@ const CreateEvent = () => {
               </CardContent>
             </Card>
 
-            <div className="flex justify-end space-x-4">
+            {/* Form Actions */}
+            <div className="flex justify-end space-x-4 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => navigate('/dashboard')}
+                className="border-gray-300 hover:bg-gray-50"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={!isFormValid || loading}
-                className="bg-peach-gold hover:bg-peach-gold/90"
+                className="bg-secondary hover:bg-secondary/90 text-white"
               >
-                {loading ? 'Creating...' : 'Create Event'}
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Event'
+                )}
               </Button>
             </div>
           </form>

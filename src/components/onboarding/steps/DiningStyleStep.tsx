@@ -1,5 +1,4 @@
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { UtensilsCrossed, Coffee, Wine, Users } from 'lucide-react';
 
@@ -49,40 +48,39 @@ const DINING_STYLES = [
 
 export const DiningStyleStep: React.FC<DiningStyleStepProps> = ({ data, updateData }) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-xl font-semibold">What's your dining style?</h2>
-        <p className="text-muted-foreground">
-          Choose the type of dining experiences you enjoy most
-        </p>
+        <h1 className="text-3xl font-semibold text-[#F7C992]">What's your dining style?</h1>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {DINING_STYLES.map((style) => {
           const Icon = style.icon;
           const isSelected = data.dining_style === style.id;
-          
+
           return (
             <Card
               key={style.id}
-              className={`cursor-pointer transition-all hover:shadow-glow ${
-                isSelected 
-                  ? 'border-peach-gold bg-peach-gold/10' 
-                  : 'border-border hover:border-peach-gold/50'
-              }`}
               onClick={() => updateData('dining_style', style.id)}
+              className={`cursor-pointer hover:shadow-secondary shadow transition-all duration-200 rounded-xl border
+                ${isSelected
+                  ? 'border-[#9DC0B3] bg-[#9DC0B3]/10'
+                  : 'border-[#333] hover:border-[#9DC0B3]/60 hover:bg-[#1e1e1e]'}
+              `}
             >
               <CardContent className="p-4 text-center space-y-3">
-                <div className={`h-12 w-12 rounded-full flex items-center justify-center mx-auto ${
-                  isSelected ? 'bg-peach-gold/20' : 'bg-muted'
-                }`}>
-                  <Icon className={`h-6 w-6 ${
-                    isSelected ? 'text-peach-gold' : 'text-muted-foreground'
-                  }`} />
+                <div
+                  className={`h-12 w-12 rounded-full flex items-center justify-center mx-auto 
+                    ${isSelected ? 'bg-[#9DC0B3]/30' : 'bg-[#2a2a2a]'}`}
+                >
+                  <Icon
+                    className={`h-6 w-6 
+                      ${isSelected ? 'text-[#9DC0B3]' : 'text-[#F7C992]'}`}
+                  />
                 </div>
                 <div>
-                  <h3 className="font-semibold">{style.name}</h3>
-                  <p className="text-sm text-muted-foreground">{style.description}</p>
+                  <h3 className="font-semibold text-[#FEFEFE]">{style.name}</h3>
+                  <p className={`text-sm  ${isSelected ? 'text-[#9DC0B3]' : 'text-[#EFEFEF]/50'} opacity-80`}>{style.description}</p>
                 </div>
               </CardContent>
             </Card>

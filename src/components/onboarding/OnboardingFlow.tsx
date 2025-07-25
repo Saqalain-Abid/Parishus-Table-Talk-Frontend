@@ -69,7 +69,7 @@ const OnboardingFlow = () => {
 
   const handleComplete = async () => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
       const { error } = await supabase
@@ -117,54 +117,59 @@ const OnboardingFlow = () => {
       case 'location':
         return !!onboardingData.location_city;
       case 'photo':
-        return true; // Photo is optional
+        return true;
       default:
         return false;
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4">
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+          <div className="flex items-center justify-center">
+            <img className='max-w-24' src="/Parishus logo.png" alt="ParishUs Logo" />
+          </div>
+          <h1 className="text-3xl font-bold text-[#F7C992]">
             Welcome to ParishUs!
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-[#FEFEFE]">
             Let's set up your profile to find the perfect dining experiences
           </p>
         </div>
 
-        <Card className="shadow-card border-border">
+        <Card className="bg-[#1E1E1E] text-[#FEFEFE] border border-[#9DC0B3] shadow-xl">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>{STEPS[currentStep].title}</CardTitle>
-              <span className="text-sm text-muted-foreground">
+              <CardTitle className="text-[#F7C992] mb-3">{STEPS[currentStep].title}</CardTitle>
+              <span className="text-sm text-[#9DC0B3]">
                 {currentStep + 1} of {STEPS.length}
               </span>
             </div>
-            <Progress value={progress} className="w-full" />
+            <Progress value={progress} className="w-full bg-[#2D2D2D]" />
           </CardHeader>
+
           <CardContent className="space-y-6">
             <CurrentStepComponent
               data={onboardingData}
               updateData={updateOnboardingData}
             />
-            
+
             <div className="flex justify-between">
               <Button
                 variant="outline"
                 onClick={handleBack}
                 disabled={currentStep === 0}
+                className="border-[#9DC0B3] text-[#9DC0B3] hover:bg-[#2D2D2D] hover:text-[#EFEFEF]"
               >
                 Back
               </Button>
               <Button
                 onClick={handleNext}
                 disabled={!isStepComplete() || loading}
-                className="bg-peach-gold hover:bg-peach-gold/90"
+                className="bg-[#9DC0B3] text-black hover:bg-[#9DC0B3]/90"
               >
-                {currentStep === STEPS.length - 1 ? 'Complete' : 'Next'}
+                {currentStep === STEPS.length - 1 ? 'Complete' : 'Continue'}
               </Button>
             </div>
           </CardContent>

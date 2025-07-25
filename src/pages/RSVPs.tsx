@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
+import {
   Calendar,
   Clock,
   MapPin,
@@ -17,6 +17,7 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { PopoverModal } from '@/components/ui/PopoverModal';
 
 interface RSVP {
   id: string;
@@ -48,6 +49,15 @@ const RSVPs = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [cancelTarget, setCancelTarget] = useState<{ rsvpId: string; eventId: string } | null>(null);
+  const [popoverVisible, setPopoverVisible] = useState(false);
+  const [popoverConfig, setPopoverConfig] = useState<{
+    message: string;
+    type: 'info' | 'success' | 'warning';
+  }>({
+    message: '',
+    type: 'info',
+  });
 
   useEffect(() => {
     if (user) {
@@ -60,7 +70,7 @@ const RSVPs = () => {
 
     try {
       console.log('Fetching RSVPs for user:', user.id);
-      
+
       // Get user's profile ID first
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
@@ -119,10 +129,16 @@ const RSVPs = () => {
     }
   };
 
-  const cancelRSVP = async (rsvpId: string, eventId: string) => {
-    const confirmed = window.confirm("Are you sure you want to cancel this RSVP?");
-    if (!confirmed) return;
+  const handleCancelRSVP = (rsvpId: string, eventId: string) => {
+    setCancelTarget({ rsvpId, eventId });
+    setPopoverConfig({
+      message: "Are you sure you want to cancel your RSVP for this event?",
+      type: "warning",
+    });
+    setPopoverVisible(true);
+  };
 
+  const cancelRSVP = async (rsvpId: string, eventId: string) => {
     try {
       // Get user's profile ID first
       const { data: profile, error: profileError } = await supabase
@@ -188,6 +204,34 @@ const RSVPs = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {popoverVisible && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <PopoverModal
+            message={popoverConfig.message}
+            type={popoverConfig.type}
+            primaryAction={{
+              label: cancelTarget ? 'Yes, Cancel RSVP' : 'Okay',
+              onClick: () => {
+                setPopoverVisible(false);
+
+                // If this was a cancel confirmation, proceed
+                if (cancelTarget) {
+                  cancelRSVP(cancelTarget.rsvpId, cancelTarget.eventId);
+                  setCancelTarget(null);
+                }
+              },
+            }}
+            secondaryAction={{
+              label: 'No, Go Back',
+              onClick: () => {
+                setPopoverVisible(false);
+                setCancelTarget(null);
+              },
+            }}
+          />
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
           <div>
@@ -249,20 +293,20 @@ const RSVPs = () => {
                 {rsvps.map((rsvp) => {
                   const eventDate = new Date(rsvp.events.date_time);
                   const isUpcoming = eventDate > new Date();
-                  
+
                   return (
                     <Card key={rsvp.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                       {/* Event Image */}
                       {rsvp.events.cover_photo_url && (
                         <div className="h-48 overflow-hidden">
-                          <img 
-                            src={rsvp.events.cover_photo_url} 
+                          <img
+                            src={rsvp.events.cover_photo_url}
                             alt={rsvp.events.name}
                             className="w-full h-full object-cover"
                           />
                         </div>
                       )}
-                      
+
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <CardTitle className="text-lg leading-tight">{rsvp.events.name}</CardTitle>
@@ -275,7 +319,7 @@ const RSVPs = () => {
                             </Badge>
                           </div>
                         </div>
-                        
+
                         <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
                           {rsvp.events.description}
                         </p>
@@ -332,7 +376,7 @@ const RSVPs = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => cancelRSVP(rsvp.id, rsvp.events.id)}
+                            onClick={() => handleCancelRSVP(rsvp.id, rsvp.events.id)}
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
                             <Trash2 className="h-4 w-4" />

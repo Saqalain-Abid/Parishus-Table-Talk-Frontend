@@ -17,21 +17,19 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background/95 to-muted/20">
+      <div className="min-h-screen w-full flex bg-gradient-to-br from-background via-background/95 to-muted/20 overflow-hidden">
         <AdminSidebar />
-        
-        <div className="flex-1 flex flex-col">
+
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
           {/* Header */}
-          <header className="h-20 border-b border-border/50 bg-card/80 backdrop-blur-sm px-8 flex items-center justify-between shadow-sm">
-            <div className="flex items-center space-x-6">
+          <header className="h-20 shrink-0 border-b border-border/50 bg-card/80 backdrop-blur-sm px-6 md:px-8 flex items-center justify-between shadow-sm">
+            <div className="flex items-center space-x-4 sm:space-x-6">
               <SidebarTrigger className="h-10 w-10 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors" />
               <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                    Admin Panel
-                  </h1>
-                </div>
+                <Sparkles className="h-6 w-6 text-primary" />
+                <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  Admin Panel
+                </h1>
                 <Badge 
                   variant={profile?.role === 'superadmin' ? 'default' : 'secondary'} 
                   className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full"
@@ -47,13 +45,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 </Badge>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-foreground">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-medium text-foreground truncate">
                   {profile?.first_name} {profile?.last_name}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground truncate">
                   {profile?.email}
                 </p>
               </div>
@@ -70,8 +68,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-auto bg-gradient-to-b from-background/50 to-muted/10 p-4 sm:p-6 lg:p-8">
-            <div className="w-full max-w-full mx-auto">
+          <main className="flex-1 overflow-y-auto bg-gradient-to-b from-background/50 to-muted/10 p-4 sm:p-6 lg:p-8">
+            <div className="max-w-full w-full mx-auto">
               {children}
             </div>
           </main>

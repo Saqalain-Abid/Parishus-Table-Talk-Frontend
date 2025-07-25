@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import Loader from '@/components/ui/Loader';
 
 interface Event {
   id: string;
@@ -458,7 +459,7 @@ const ExploreEvents = () => {
             </div>
             <Button 
               onClick={() => navigate('/create-event')}
-              className="bg-peach-gold hover:bg-peach-gold/90 mt-4 sm:mt-0"
+              className="bg-secondary hover:bg-secondary/90 mt-4 sm:mt-0"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create Event

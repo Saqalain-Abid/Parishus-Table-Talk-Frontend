@@ -8,8 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Camera, Edit, Save, X, CreditCard } from 'lucide-react';
+import { Camera, Edit, Save, X, CreditCard, Mail, User, Briefcase, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -196,8 +195,8 @@ const Profile = () => {
       <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-card rounded w-48 mb-8"></div>
-            <div className="h-64 bg-card rounded"></div>
+            <div className="h-8 bg-card rounded w-48 mb-8" />
+            <div className="h-64 bg-card rounded" />
           </div>
         </div>
       </div>
@@ -215,22 +214,44 @@ const Profile = () => {
             </Button>
           </div>
 
-          <Card className="shadow-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Personal Information
+          <Card className="border-border shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center justify-between text-lg font-semibold">
+                <div className="flex items-center space-x-2">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                  <span>Personal Information</span>
+                </div>
                 {!editing ? (
-                  <Button onClick={() => setEditing(true)} variant="outline" size="sm">
+                  <Button 
+                    onClick={() => setEditing(true)} 
+                    variant="outline" 
+                    size="sm"
+                    className="border text-white hover:text-black hover:bg-secondary/90"
+                  >
                     <Edit className="h-4 w-4 mr-2" />
-                    Edit
+                    Edit Profile
                   </Button>
                 ) : (
                   <div className="flex space-x-2">
-                    <Button onClick={handleSave} disabled={loading} size="sm" className="bg-peach-gold hover:bg-peach-gold/90 text-background">
-                      <Save className="h-4 w-4 mr-2" />
-                      {loading ? 'Saving...' : 'Save'}
+                    <Button 
+                      onClick={handleSave} 
+                      disabled={loading} 
+                      size="sm" 
+                      className="bg-primary border-primary border hover:bg-primary/90 hover:text-black shadow-sm"
+                    >
+                      {loading ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4 mr-2" />
+                      )}
+                      {loading ? 'Saving...' : 'Save Changes'}
                     </Button>
-                    <Button onClick={handleCancel} variant="outline" size="sm">
+                    <Button 
+                      onClick={handleCancel} 
+                      variant="outline" 
+                      size="sm"
+                      className="border-gray-300 hover:bg-secondary"
+                    >
                       <X className="h-4 w-4 mr-2" />
                       Cancel
                     </Button>
@@ -239,11 +260,11 @@ const Profile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="flex items-center space-x-6">
-                <div className="relative">
-                  <Avatar className="h-24 w-24">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <div className="relative group">
+                  <Avatar className="h-28 w-28 border-2 border-peach-gold/30">
                     <AvatarImage src={profile.profile_photo_url || ''} />
-                    <AvatarFallback className="bg-peach-gold text-background text-xl">
+                    <AvatarFallback className="bg-peach-gold/90 text-white text-2xl font-medium">
                       {profile.first_name?.[0]}{profile.last_name?.[0]}
                     </AvatarFallback>
                   </Avatar>
@@ -255,80 +276,112 @@ const Profile = () => {
                     id="photo-upload"
                     disabled={uploading}
                   />
-                  <label htmlFor="photo-upload">
-                    <Button
-                      asChild
-                      size="sm"
-                      className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0 bg-peach-gold hover:bg-peach-gold/90 text-background cursor-pointer"
-                      disabled={uploading}
-                    >
-                      <span>
-                        <Camera className="h-4 w-4" />
-                      </span>
-                    </Button>
+                  <label 
+                    htmlFor="photo-upload"
+                    className={`absolute inset-0 flex items-center justify-center bg-black/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${uploading ? 'opacity-100' : ''}`}
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-6 w-6 animate-spin text-white" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-white" />
+                    )}
                   </label>
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-foreground">
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-bold text-foreground">
                     {profile.first_name} {profile.last_name}
                   </h3>
-                  <p className="text-muted-foreground">{profile.email}</p>
+                  <p className="text-muted-foreground flex items-center">
+                    <Mail className="h-4 w-4 mr-2" />
+                    {profile.email}
+                  </p>
                   {profile.job_title && (
-                    <p className="text-muted-foreground">{profile.job_title}</p>
+                    <p className="text-muted-foreground flex items-center">
+                      <Briefcase className="h-4 w-4 mr-2" />
+                      {profile.job_title}
+                    </p>
                   )}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="first_name">First Name</Label>
+                  <Label htmlFor="first_name" className="text-sm font-medium text-muted-foreground">
+                    First Name
+                  </Label>
                   {editing ? (
                     <Input
                       id="first_name"
                       value={formData.first_name}
                       onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
+                      className="focus-visible:ring-peach-gold"
                     />
                   ) : (
-                    <p className="text-foreground p-2 bg-muted rounded-md">{profile.first_name || 'Not set'}</p>
+                    <div className="p-3 bg-muted/50 rounded-md border border-transparent">
+                      <p className={profile.first_name ? "text-foreground" : "text-muted-foreground"}>
+                        {profile.first_name || 'Not provided'}
+                      </p>
+                    </div>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="last_name">Last Name</Label>
+                  <Label htmlFor="last_name" className="text-sm font-medium text-muted-foreground">
+                    Last Name
+                  </Label>
                   {editing ? (
                     <Input
                       id="last_name"
                       value={formData.last_name}
                       onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))}
+                      className="focus-visible:ring-peach-gold"
                     />
                   ) : (
-                    <p className="text-foreground p-2 bg-muted rounded-md">{profile.last_name || 'Not set'}</p>
+                    <div className="p-3 bg-muted/50 rounded-md border border-transparent">
+                      <p className={profile.last_name ? "text-foreground" : "text-muted-foreground"}>
+                        {profile.last_name || 'Not provided'}
+                      </p>
+                    </div>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="job_title">Job Title</Label>
+                  <Label htmlFor="job_title" className="text-sm font-medium text-muted-foreground">
+                    Job Title
+                  </Label>
                   {editing ? (
                     <Input
                       id="job_title"
                       value={formData.job_title}
                       onChange={(e) => setFormData(prev => ({ ...prev, job_title: e.target.value }))}
+                      className="focus-visible:ring-peach-gold"
                     />
                   ) : (
-                    <p className="text-foreground p-2 bg-muted rounded-md">{profile.job_title || 'Not set'}</p>
+                    <div className="p-3 bg-muted/50 rounded-md border border-transparent">
+                      <p className={profile.job_title ? "text-foreground" : "text-muted-foreground"}>
+                        {profile.job_title || 'Not provided'}
+                      </p>
+                    </div>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="location_city">Location</Label>
+                  <Label htmlFor="location_city" className="text-sm font-medium text-muted-foreground">
+                    Location
+                  </Label>
                   {editing ? (
                     <Input
                       id="location_city"
                       value={formData.location_city}
                       onChange={(e) => setFormData(prev => ({ ...prev, location_city: e.target.value }))}
+                      className="focus-visible:ring-peach-gold"
                     />
                   ) : (
-                    <p className="text-foreground p-2 bg-muted rounded-md">{profile.location_city || 'Not set'}</p>
+                    <div className="p-3 bg-muted/50 rounded-md border border-transparent">
+                      <p className={profile.location_city ? "text-foreground" : "text-muted-foreground"}>
+                        {profile.location_city || 'Not provided'}
+                      </p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -348,102 +401,172 @@ const Profile = () => {
                   <div className="flex space-x-2">
                     <Button onClick={handleSavePreferences} disabled={loading} size="sm" className="bg-peach-gold hover:bg-peach-gold/90 text-background">
                       <Save className="h-4 w-4 mr-2" />
-                      {loading ? 'Saving...' : 'Save'}
+                      {loading ? 'Saving...' : 'Save Changes'}
                     </Button>
                     <Button onClick={handleCancelPreferences} variant="outline" size="sm">
                       <X className="h-4 w-4 mr-2" />
-                      Cancel
+                      Discard Changes
                     </Button>
                   </div>
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Dining Style</Label>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">What's Your Dining Style?</h3>
+                
                 {editingPreferences ? (
-                  <Select value={preferenceData.dining_style} onValueChange={(value: any) => setPreferenceData(prev => ({ ...prev, dining_style: value }))}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select dining style" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="adventurous">Adventurous</SelectItem>
-                      <SelectItem value="foodie_enthusiast">Foodie Enthusiast</SelectItem>
-                      <SelectItem value="local_lover">Local Lover</SelectItem>
-                      <SelectItem value="comfort_food">Comfort Food</SelectItem>
-                      <SelectItem value="health_conscious">Health Conscious</SelectItem>
-                      <SelectItem value="social_butterfly">Social Butterfly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <p className="text-foreground p-2 bg-muted rounded-md mt-1">
-                    {profile.dining_style ? profile.dining_style.replace('_', ' ') : 'Not set'}
-                  </p>
-                )}
-              </div>
-              
-              <div>
-                <Label>Dietary Preferences</Label>
-                {editingPreferences ? (
-                  <div className="grid grid-cols-2 gap-2 mt-1">
-                    {['vegetarian', 'vegan', 'gluten_free', 'dairy_free', 'keto', 'paleo', 'halal', 'kosher', 'no_restrictions'].map((pref) => (
-                      <label key={pref} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          checked={preferenceData.dietary_preferences.includes(pref as any)}
-                           onChange={(e) => {
-                            const typedPref = pref as 'vegetarian' | 'vegan' | 'gluten_free' | 'dairy_free' | 'keto' | 'paleo' | 'halal' | 'kosher' | 'no_restrictions';
-                            if (e.target.checked) {
-                              setPreferenceData(prev => ({
-                                ...prev,
-                                dietary_preferences: [...prev.dietary_preferences, typedPref]
-                              }));
-                            } else {
-                              setPreferenceData(prev => ({
-                                ...prev,
-                                dietary_preferences: prev.dietary_preferences.filter(p => p !== typedPref)
-                              }));
-                            }
-                          }}
-                          className="rounded"
-                        />
-                        <span className="text-sm">{pref.replace('_', ' ')}</span>
-                      </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { value: "adventurous", label: "Adventurous Eater", description: "Always trying new cuisines" },
+                      { value: "health_conscious", label: "Healthy Choices", description: "Focus on nutritious options" },
+                      { value: "foodie_enthusiast", label: "Foodie Enthusiast", description: "Passionate about culinary experiences" },
+                      { value: "local_lover", label: "Local Lover", description: "Prefers authentic local spots" },
+                      { value: "comfort_food", label: "Comfort Food", description: "Classic favorites and familiar tastes" }
+                    ].map((style) => (
+                      <div 
+                        key={style.value}
+                        onClick={() => setPreferenceData(prev => ({ ...prev, dining_style: style.value } as any))}
+                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                          preferenceData.dining_style === style.value 
+                            ? 'border-peach-gold bg-peach-gold/10' 
+                            : 'border-border hover:bg-accent'
+                        }`}
+                      >
+                        <div className="font-medium">{style.label}</div>
+                        <div className="text-sm text-muted-foreground">{style.description}</div>
+                      </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {profile.dietary_preferences && profile.dietary_preferences.length > 0 ? (
-                      profile.dietary_preferences.map((pref) => (
-                        <Badge key={pref} variant="secondary">
-                          {pref.replace('_', ' ')}
+                  <div className="p-4 bg-muted rounded-lg">
+                    {profile.dining_style ? (
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <div className="font-medium">
+                            {profile.dining_style.split('_').map(word => 
+                              word.charAt(0).toUpperCase() + word.slice(1)
+                            ).join(' ')}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {(() => {
+                              switch(profile.dining_style) {
+                                case 'adventurous': return "Always trying new cuisines";
+                                case 'health_conscious': return "Focus on nutritious options";
+                                case 'foodie_enthusiast': return "Passionate about culinary experiences";
+                                case 'local_lover': return "Prefers authentic local spots";
+                                case 'comfort_food': return "Classic favorites and familiar tastes";
+                                default: return "";
+                              }
+                            })()}
+                          </div>
+                        </div>
+                        <Badge variant="secondary">
+                          Current Selection
                         </Badge>
-                      ))
+                      </div>
                     ) : (
-                      <p className="text-muted-foreground">None set</p>
+                      <div className="text-muted-foreground">No dining style selected</div>
                     )}
                   </div>
                 )}
               </div>
 
-              <div>
-                <Label>Gender Identity</Label>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Dietary Preferences</h3>
                 {editingPreferences ? (
-                  <Select value={preferenceData.gender_identity} onValueChange={(value: any) => setPreferenceData(prev => ({ ...prev, gender_identity: value }))}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select gender identity" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="non_binary">Non-binary</SelectItem>
-                      <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {[
+                      { value: "vegetarian", label: "Vegetarian" },
+                      { value: "vegan", label: "Vegan" },
+                      { value: "gluten_free", label: "Gluten Free" },
+                      { value: "dairy_free", label: "Dairy Free" },
+                      { value: "keto", label: "Keto" },
+                      { value: "paleo", label: "Paleo" },
+                      { value: "halal", label: "Halal" },
+                      { value: "kosher", label: "Kosher" },
+                      { value: "no_restrictions", label: "No Restrictions" }
+                    ].map((pref) => (
+                      <div 
+                        key={pref.value}
+                        onClick={() => {
+                          const typedPref = pref.value as 'vegetarian' | 'vegan' | 'gluten_free' | 'dairy_free' | 'keto' | 'paleo' | 'halal' | 'kosher' | 'no_restrictions';
+                          if (preferenceData.dietary_preferences.includes(typedPref)) {
+                            setPreferenceData(prev => ({
+                              ...prev,
+                              dietary_preferences: prev.dietary_preferences.filter(p => p !== typedPref)
+                            }));
+                          } else {
+                            setPreferenceData(prev => ({
+                              ...prev,
+                              dietary_preferences: [...prev.dietary_preferences, typedPref]
+                            }));
+                          }
+                        }}
+                        className={`p-3 border rounded-md cursor-pointer text-center transition-colors ${
+                          preferenceData.dietary_preferences.includes(pref.value as any)
+                            ? 'border-peach-gold bg-peach-gold/10' 
+                            : 'border-border hover:bg-accent'
+                        }`}
+                      >
+                        {pref.label}
+                      </div>
+                    ))}
+                  </div>
                 ) : (
-                  <p className="text-foreground p-2 bg-muted rounded-md mt-1">
-                    {profile.gender_identity ? profile.gender_identity.replace('_', ' ') : 'Not set'}
-                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {profile.dietary_preferences && profile.dietary_preferences.length > 0 ? (
+                      profile.dietary_preferences.map((pref) => (
+                        <Badge key={pref} variant="secondary">
+                          {pref.split('_').map(word => 
+                            word.charAt(0).toUpperCase() + word.slice(1)
+                          ).join(' ')}
+                        </Badge>
+                      ))
+                    ) : (
+                      <div className="text-muted-foreground">No dietary preferences selected</div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Gender Identity</h3>
+                {editingPreferences ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { value: "male", label: "Male" },
+                      { value: "female", label: "Female" },
+                      { value: "non_binary", label: "Non-binary" },
+                      { value: "prefer_not_to_say", label: "Prefer not to say" }
+                    ].map((gender) => (
+                      <div 
+                        key={gender.value}
+                        onClick={() => setPreferenceData(prev => ({ ...prev, gender_identity: gender.value as any }))}
+                        className={`p-3 border rounded-md cursor-pointer text-center transition-colors ${
+                          preferenceData.gender_identity === gender.value
+                            ? 'border-peach-gold bg-peach-gold/10' 
+                            : 'border-border hover:bg-accent'
+                        }`}
+                      >
+                        {gender.label}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-muted rounded-md">
+                    {profile.gender_identity ? (
+                      <div className="flex items-center gap-3">
+                        <div className="font-medium">
+                          {profile.gender_identity.split('_').map(word => 
+                            word.charAt(0).toUpperCase() + word.slice(1)
+                          ).join(' ')}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-muted-foreground">Not specified</div>
+                    )}
+                  </div>
                 )}
               </div>
             </CardContent>

@@ -8,12 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Users, 
-  Search, 
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  Search,
   Plus,
   Heart,
   UserCheck,
@@ -60,7 +60,7 @@ const Events = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('upcoming');
   const [userProfileId, setUserProfileId] = useState<string | null>(null);
-  
+
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -79,7 +79,7 @@ const Events = () => {
         return null;
       }
     };
-    
+
     getUserProfile().then((profileId) => {
       if (profileId) {
         fetchEvents(profileId);
@@ -149,7 +149,7 @@ const Events = () => {
 
     try {
       console.log('Fetching RSVP events for user:', user.id, 'profile:', currentProfileId);
-      
+
       // Fetch only events user has RSVP'd to (including events they created if they RSVPed)
       const { data: rsvpEvents, error: rsvpError } = await supabase
         .from('events')
@@ -299,9 +299,10 @@ const Events = () => {
           <p className="text-muted-foreground mb-4">
             {showActions ? "You haven't created or joined any events yet" : "No events available at the moment"}
           </p>
-          <Button 
+
+          <Button
             onClick={() => navigate('/create-event')}
-            className="bg-peach-gold hover:bg-peach-gold/90"
+            className="bg-secondary hover:secondary/90"
           >
             <Plus className="h-4 w-4 mr-2" />
             {showActions ? "Create Your First Event" : "Create Event"}
@@ -322,163 +323,91 @@ const Events = () => {
           const isUpcoming = eventDate > new Date();
 
           return (
-            <Card key={event.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              {/* Event Image */}
-              {event.cover_photo_url && (
-                <div className="h-48 overflow-hidden">
-                  <img 
-                    src={event.cover_photo_url} 
-                    alt={event.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg leading-tight">{event.name}</CardTitle>
-                  <div className="flex gap-1 ml-2">
-                    <Badge variant={isUpcoming ? "default" : "secondary"} className="text-xs">
-                      {isUpcoming ? 'Upcoming' : 'Past'}
-                    </Badge>
-                    {isCreator && (
-                      <Badge variant="outline" className="text-xs">
-                        Creator
-                      </Badge>
-                    )}
-                    {hasRSVP && !isCreator && (
-                      <Badge variant="default" className="text-xs bg-sage-green">
-                        Going
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                
-                <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
-                  {event.description}
-                </p>
+            <Card className="flex flex-col h-full border border-secondary rounded-xl overflow-hidden shadow-sm">
+              {/* Image with Overlay */}
+              <div className="relative h-40 w-full overflow-hidden">
+                {/* Image or Fallback */}
+                <img
+                  src={
+                    event.cover_photo_url
+                      ? event.cover_photo_url
+                      : 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMYAAACUCAMAAAD/A6aTAAAATlBMVEXu7u5mZmbx8fFhYWGsrKypqalaWlrQ0NDq6urg4ODl5eWGhoZ2dnaMjIx/f3/09PS9vb3Y2NhwcHBUVFTJycmgoKDDw8OYmJhra2u1tbWVa4OnAAACPklEQVR4nO3a2XKjMBBAUWhhmV3gbZz//9GRwDhsk1ThmXKTuechDzip0o1oC1cSRQAAAAAAAAAAAAAAAAAAAP+YvOTdqx+kTfKCW/ru9fckq89ms3OV69gPn1Eft7qUijKKzeMR+Yx3B/RCxub7O1W1G/9Rxupq95examcZqYhzK0fdzjIkPSbJJV2seF8Zkl2NtaZq50veU4ZE6dWYOI5tMT8k9pXRnszdZxjbuOlLe8qI5NZthontr71lyOigkCZUhJCrmy5aeYZMjzt/U3UZ9rar3ZD2Nu6Q6NDfVcV8zaozXFvfPyZ3Vb6/N1xxWek/ECXT+6dtPo7L5yrNGW3ZHRLJ5IN2eBpZ/rDeDDnW3Twb8zH/7Uv/ZXRVbYZ7VATJpKOPcNkhc8/rOjPET3dphwoTJ4vtcHnlH0met5fODD8X/oR47oYxh9k8SF741+tsmBqdGY/p/mSS6ffmhe3Oj1ZxhshoLob9GM2Hn4uqv+OeHRoz3KKim4+hQySrzOOiKbLudlOY4eZ31LAf/VusSP6oiP1Du6nT0KEsIzwKtvFKRTgHD92DostqO84rw34oywin3tpePDrCmZcVdnK1mw9tGXJZzsXnipPUzSv6DmUZa9M9WnB8aKvl637OI00ZdbQ63SP309rgmDKvFWVUrfm6IrxhrV215UlPRlGevqv4Y51VlPHtXnzRoSljcwUZfxkZujLqs91MzR+Uo7Q5vKBZ/tHjTX7GP1sAAAAAAAAAAAAAAAAAAICf6zcVZSGYiJ5WLQAAAABJRU5ErkJggg=='
+                  }
+                  alt={event.name}
+                  className="w-full h-full object-cover"
+                />
 
-                {/* Tags */}
-                {event.tags && event.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {event.tags.slice(0, 3).map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                    {event.tags.length > 3 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{event.tags.length - 3}
-                      </Badge>
-                    )}
-                  </div>
-                )}
-              </CardHeader>
+                {/* Black Overlay */}
+                <div className="absolute inset-0 bg-black/80 z-10" />
 
-              <CardContent className="pt-0 space-y-4">
+                {/* Text Content */}
+                <div className="absolute inset-0 p-4 flex flex-col justify-end z-20">
+                  <h3 className="text-secondary text-xl font-bold line-clamp-1">{event.name}</h3>
+                  {event.description && (
+                    <p className="text-secondary/90 text-sm mt-1 line-clamp-1">{event.description}</p>
+                  )}
+                </div>
+              </div>
+
+
+
+              {/* Footer Section */}
+              <CardContent className="flex flex-col flex-grow space-y-3 p-4">
                 {/* Date & Time */}
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{eventDate.toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                </div>
-
-                {/* Location */}
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm truncate">{event.location_name}</span>
-                </div>
-
-                {/* Host */}
-                <div className="flex items-center space-x-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={event.profiles?.profile_photo_url} />
-                    <AvatarFallback className="text-xs">
-                      {event.profiles?.first_name?.[0] || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm truncate">
-                    {event.profiles?.first_name} {event.profiles?.last_name}
+                <div className="text-sm flex items-center gap-2">
+                  <span>
+                    {new Date(event.date_time).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                    {' - '}
+                    {new Date(event.date_time).toLocaleTimeString('en-US', {
+                      hour: 'numeric',
+                      minute: '2-digit'
+                    })}
                   </span>
                 </div>
 
-                {/* Attendees */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{event.rsvp_count}/{event.max_attendees}</span>
+                {/* RSVP Count */}
+                {event.max_attendees && (
+                  <div className="text-sm font-medium py-4 border-t-2 border-b-2 border-y-black-900">
+                    {event.rsvp_count || 0}/{event.max_attendees} RSVPed
                   </div>
-                  {spotsLeft > 0 && spotsLeft <= 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      {spotsLeft} spots left
-                    </Badge>
+                )}
+
+                <div className='flex items-center'>
+                  <MapPin className="w-6 h-6 text-white" />
+
+                  {/* Location */}
+                  <div className="text-sm flex flex-col items-center">
+                    <span className="">{event.location_name || 'Location not specified'}</span>
+                  {/* Address */}
+                  {event.location_address && (
+                    <span className="text-sm text-gray-500 line-clamp-1">
+                      {event.location_address}
+                    </span>
                   )}
-                  {spotsLeft === 0 && (
-                    <Badge variant="secondary" className="text-xs">
-                      Full
-                    </Badge>
-                  )}
+                  </div>
+
+
                 </div>
 
-                {/* Actions */}
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {/* Details Button */}
+
+                {/* Spacer and Button */}
+                <div className="flex-grow" />
+
+                <div>
                   <Button
-                    variant="outline"
-                    size="sm"
                     onClick={() => navigate(`/event/${event.id}/details`)}
-                    className="flex-1"
+                    className="w-full bg-secondary hover:bg-secondary/80 text-black border border-secondary"
                   >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Details
+                    See details
                   </Button>
-
-                  {/* RSVP Button */}
-                  {spotsLeft > 0 && (
-                    <Button
-                      onClick={() => handleRSVP(event.id)}
-                      variant={hasRSVP ? "default" : "outline"}
-                      size="sm"
-                      className={hasRSVP ? "bg-sage-green hover:bg-sage-green/90" : ""}
-                    >
-                      {hasRSVP ? (
-                        <UserCheck className="h-4 w-4" />
-                      ) : (
-                        <Heart className="h-4 w-4" />
-                      )}
-                    </Button>
-                  )}
-
-                  {/* Edit Button (only for creators) */}
-                  {isCreator && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/event/${event.id}/edit`)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
-
-                  {/* Delete Button (only for creators) */}
-                  {isCreator && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => deleteEvent(event.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
                 </div>
               </CardContent>
             </Card>
+
+
           );
         })}
       </div>
@@ -507,9 +436,9 @@ const Events = () => {
                 Discover and join dining experiences
               </p>
             </div>
-            <Button 
+            <Button
               onClick={() => navigate('/create-event')}
-              className="bg-peach-gold hover:bg-peach-gold/90 mt-4 sm:mt-0"
+              className="bg-secondary hover:bg-secondary/90 mt-4 sm:mt-0"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create Event
@@ -521,7 +450,7 @@ const Events = () => {
               <TabsTrigger value="upcoming">Discover Events</TabsTrigger>
               <TabsTrigger value="my-events">My Events</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="upcoming" className="space-y-6">
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -537,7 +466,7 @@ const Events = () => {
                 <EventCards events={filteredEvents} />
               </div>
             </TabsContent>
-            
+
             <TabsContent value="my-events" className="space-y-6">
               <div className="space-y-6">
                 <EventCards events={myEvents} showActions />

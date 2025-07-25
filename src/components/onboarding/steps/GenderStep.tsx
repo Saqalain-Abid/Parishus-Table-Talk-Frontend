@@ -38,8 +38,8 @@ export const GenderStep: React.FC<GenderStepProps> = ({ data, updateData }) => {
               key={option.id}
               className={`cursor-pointer transition-all hover:shadow-card ${
                 isSelected 
-                  ? 'border-peach-gold bg-peach-gold/10' 
-                  : 'border-border hover:border-peach-gold/50'
+                  ? 'border-secondary bg-secondary/10' 
+                  : 'border-border hover:border-secondary/50'
               }`}
               onClick={() => handleGenderSelect(option.id)}
             >
@@ -47,7 +47,7 @@ export const GenderStep: React.FC<GenderStepProps> = ({ data, updateData }) => {
                 <div className="flex items-center space-x-3">
                   <div className={`h-4 w-4 rounded-full border-2 ${
                     isSelected 
-                      ? 'border-peach-gold bg-peach-gold' 
+                      ? 'border-secondary bg-secondary' 
                       : 'border-muted-foreground'
                   }`} />
                   <span className="font-medium">{option.name}</span>
