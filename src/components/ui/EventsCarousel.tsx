@@ -56,7 +56,10 @@ export const EventCarousel: React.FC<EventCarouselProps> = ({ events, onViewAll 
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex gap-4">
             {events.map((event) => (
-              <div key={event.id} className="flex-none justify-center w-full min-w-0">
+              <div
+                key={event.id}
+                className="flex-none w-full sm:w-[80%] md:w-1/2 lg:w-1/3"
+              >
                 <Card
                   className="max-w-2xl bg-white/10 border-white/20 backdrop-blur-sm hover:bg-white/15 transition-all duration-300 cursor-pointer hover-scale"
                   onClick={() => navigate(`/event/${event.id}/details`)}

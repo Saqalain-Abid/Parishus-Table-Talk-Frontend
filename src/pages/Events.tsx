@@ -323,7 +323,7 @@ const Events = () => {
           const isUpcoming = eventDate > new Date();
 
           return (
-            <Card className="flex flex-col h-full border border-secondary rounded-xl overflow-hidden shadow-sm">
+            <Card className="flex flex-col h-full bg-[#0A0A0A] border border-secondary rounded-sm overflow-hidden shadow-sm">
               {/* Image with Overlay */}
               <div className="relative h-40 w-full overflow-hidden">
                 {/* Image or Fallback */}
@@ -338,7 +338,7 @@ const Events = () => {
                 />
 
                 {/* Black Overlay */}
-                <div className="absolute inset-0 bg-black/80 z-10" />
+                <div className="absolute inset-0 bg-black/70 z-10" />
 
                 {/* Text Content */}
                 <div className="absolute inset-0 p-4 flex flex-col justify-end z-20">
@@ -349,12 +349,10 @@ const Events = () => {
                 </div>
               </div>
 
-
-
               {/* Footer Section */}
-              <CardContent className="flex flex-col flex-grow space-y-3 p-4">
+              <CardContent className="flex flex-col flex-grow space-y-3 p-3">
                 {/* Date & Time */}
-                <div className="text-sm flex items-center gap-2">
+                <div className="text-sm flex items-center pl-2">
                   <span>
                     {new Date(event.date_time).toLocaleDateString('en-US', {
                       month: 'short',
@@ -370,7 +368,7 @@ const Events = () => {
 
                 {/* RSVP Count */}
                 {event.max_attendees && (
-                  <div className="text-sm font-medium py-4 border-t-2 border-b-2 border-y-black-900">
+                  <div className="text-sm font-medium py-4 pl-2 border-t-2 border-b-2 border-y-black-900">
                     {event.rsvp_count || 0}/{event.max_attendees} RSVPed
                   </div>
                 )}
@@ -379,7 +377,7 @@ const Events = () => {
                   <MapPin className="w-6 h-6 text-white" />
 
                   {/* Location */}
-                  <div className="text-sm flex flex-col items-center">
+                  <div className="text-sm flex flex-col ml-2">
                     <span className="">{event.location_name || 'Location not specified'}</span>
                   {/* Address */}
                   {event.location_address && (
@@ -399,7 +397,7 @@ const Events = () => {
                 <div>
                   <Button
                     onClick={() => navigate(`/event/${event.id}/details`)}
-                    className="w-full bg-secondary hover:bg-secondary/80 text-black border border-secondary"
+                    className="w-full bg-secondary hover:bg-secondary/80 text-black border border-secondary rounded-sm"
                   >
                     See details
                   </Button>
